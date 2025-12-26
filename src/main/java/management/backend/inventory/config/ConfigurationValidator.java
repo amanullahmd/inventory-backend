@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
 
 /**
  * Validates application configuration at startup.
- * Fails fast if required configuration is missing or invalid.
+ * Fails fast if required configuration is missing or invalid in production.
  * 
  * Requirements: 7.3, 7.4
  */
@@ -16,7 +16,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class ConfigurationValidator {
 
-    @Value("${jwt.secret:}")
+    @Value("${jwt.secret:dev-secret-key-for-testing-only}")
     private String jwtSecret;
 
     @Value("${app.security.jwt-secret-min-length:32}")
@@ -32,19 +32,37 @@ public class ConfigurationValidator {
     public void validateConfiguration() {
         log.info("Validating application configuration for profile: {}", activeProfile);
 
-        // Validate JWT secret
-        if (jwtSecret == null || jwtSecret.isEmpty()) {
-            throw new IllegalStateException("JWT secret is not configured. Set JWT_SECRET environment variable.");
+        // Only enforce strict validation in production
+        if ("prod".equals(activeProfile)) {
+            validateProductionConfiguration();
+        } else {
+            log.warn("⚠️ Running in {} profile with development defaults", activeProfile);
         }
 
-        // In production, enforce minimum JWT secret length
-        if ("prod".equals(activeProfile) && jwtSecret.length() < jwtSecretMinLength) {
+        log.info("✅ Configuration validation passed");
+    }
+
+    /**
+     * Validate production configuration.
+     */
+    private void validateProductionConfiguration() {
+        // Validate JWT secret is set and not default
+        if (jwtSecret == null || jwtSecret.isEmpty() || jwtSecret.contains("dev-secret")) {
             throw new IllegalStateException(
-                    String.format("JWT secret must be at least %d characters in production. Current length: %d",
+                    "❌ CRITICAL: JWT_SECRET environment variable must be set in production. " +
+                    "Set a strong, unique secret key."
+            );
+        }
+
+        // Enforce minimum JWT secret length in production
+        if (jwtSecret.length() < jwtSecretMinLength) {
+            throw new IllegalStateException(
+                    String.format("❌ JWT secret must be at least %d characters in production. Current length: %d",
                             jwtSecretMinLength, jwtSecret.length())
             );
         }
 
-        log.info("Configuration validation passed");
+        log.info("✅ Production configuration validated");
     }
 }
+
