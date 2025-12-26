@@ -1,0 +1,78 @@
+spring:
+  application:
+    name: inventory-backend
+  
+  datasource:
+    url: jdbc:postgresql://yamanote.proxy.rlwy.net:27420/railway?sslmode=require
+    username: postgres
+    password: YhcOdcREvaqNtgbrtTLnzSFxhvJdQxeU
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 5
+      minimum-idle: 1
+      connection-timeout: 10000
+      idle-timeout: 300000
+      max-lifetime: 900000
+  
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: false
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+        jdbc:
+          batch_size: 10
+  
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: false
+    validate-on-migrate: false
+    out-of-order: false
+    repair-on-migrate: true
+
+server:
+  port: 8081
+  servlet:
+    context-path: /api
+
+logging:
+  level:
+    root: INFO
+    org.springframework.security: INFO
+    management.backend.inventory: DEBUG
+    org.springframework.web: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+    operations-sorter: method
+    tags-sorter: alpha
+
+jwt:
+  secret: your-secret-key-change-this-in-production-at-least-32-characters
+  access-token-expiration: 900000
+  refresh-token-expiration: 604800000
+
+app:
+  cors:
+    allowed-origins: http://localhost:3000,http://localhost:3001
+  security:
+    jwt-secret-min-length: 32
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: when-authorized
