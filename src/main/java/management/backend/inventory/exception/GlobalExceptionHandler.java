@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.NoHandlerFoundException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -199,6 +200,26 @@ public class GlobalExceptionHandler {
                 "RESOURCE_NOT_FOUND",
                 "Endpoint not found",
                 ex.getRequestURL()
+        );
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
+    }
+
+    /**
+     * Handle missing static resources (e.g., swagger-ui assets).
+     * Returns 404 Not Found.
+     */
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<ErrorResponse> handleNoResourceFoundException(
+            NoResourceFoundException ex,
+            WebRequest request) {
+        log.warn("Static resource not found: {}", request.getDescription(false));
+
+        ErrorResponse errorResponse = ErrorResponse.of(
+                HttpStatus.NOT_FOUND.value(),
+                "RESOURCE_NOT_FOUND",
+                "Resource not found",
+                request.getDescription(false).replace("uri=", "")
         );
 
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);

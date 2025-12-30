@@ -6,35 +6,29 @@ import java.time.LocalDateTime;
 import java.util.Objects;
 
 @Entity
-@Table(name = "categories", indexes = {
-    @Index(name = "idx_categories_name", columnList = "name"),
-    @Index(name = "idx_categories_is_active", columnList = "is_active")
+@Table(name = "warehouses", indexes = {
+    @Index(name = "idx_warehouses_name", columnList = "name"),
+    @Index(name = "idx_warehouses_active", columnList = "is_active")
 })
-public class Category {
+public class Warehouse {
     
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "category_id")
-    private Long categoryId;
+    @Column(name = "warehouse_id")
+    private Long warehouseId;
     
-    @NotBlank(message = "Category name is required")
-    @Column(name = "name", nullable = false, unique = true, length = 100)
+    @NotBlank(message = "Warehouse name is required")
+    @Column(name = "name", nullable = false, length = 100)
     private String name;
     
-    @Column(name = "description", columnDefinition = "TEXT")
-    private String description;
+    @Column(name = "address", columnDefinition = "TEXT")
+    private String address;
     
-    @Column(name = "color", length = 7)
-    private String color;
-    
-    @Column(name = "icon", length = 50)
-    private String icon;
+    @Column(name = "capacity_units")
+    private Integer capacityUnits;
     
     @Column(name = "is_active", nullable = false)
     private Boolean isActive = true;
-    
-    @Column(name = "display_order")
-    private Integer displayOrder = 0;
     
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -53,21 +47,21 @@ public class Category {
         updatedAt = LocalDateTime.now();
     }
     
-    public Category() {}
+    public Warehouse() {}
     
-    public Category(String name, String description) {
+    public Warehouse(String name, String address) {
         this.name = name;
-        this.description = description;
+        this.address = address;
         this.isActive = true;
     }
     
     // Getters and Setters
-    public Long getCategoryId() {
-        return categoryId;
+    public Long getWarehouseId() {
+        return warehouseId;
     }
     
-    public void setCategoryId(Long categoryId) {
-        this.categoryId = categoryId;
+    public void setWarehouseId(Long warehouseId) {
+        this.warehouseId = warehouseId;
     }
     
     public String getName() {
@@ -78,28 +72,20 @@ public class Category {
         this.name = name;
     }
     
-    public String getDescription() {
-        return description;
+    public String getAddress() {
+        return address;
     }
     
-    public void setDescription(String description) {
-        this.description = description;
+    public void setAddress(String address) {
+        this.address = address;
     }
     
-    public String getColor() {
-        return color;
+    public Integer getCapacityUnits() {
+        return capacityUnits;
     }
     
-    public void setColor(String color) {
-        this.color = color;
-    }
-    
-    public String getIcon() {
-        return icon;
-    }
-    
-    public void setIcon(String icon) {
-        this.icon = icon;
+    public void setCapacityUnits(Integer capacityUnits) {
+        this.capacityUnits = capacityUnits;
     }
     
     public Boolean getIsActive() {
@@ -108,14 +94,6 @@ public class Category {
     
     public void setIsActive(Boolean isActive) {
         this.isActive = isActive;
-    }
-    
-    public Integer getDisplayOrder() {
-        return displayOrder;
-    }
-    
-    public void setDisplayOrder(Integer displayOrder) {
-        this.displayOrder = displayOrder;
     }
     
     public LocalDateTime getCreatedAt() {
@@ -138,21 +116,22 @@ public class Category {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        Category category = (Category) o;
-        return Objects.equals(categoryId, category.categoryId) &&
-               Objects.equals(name, category.name);
+        Warehouse warehouse = (Warehouse) o;
+        return Objects.equals(warehouseId, warehouse.warehouseId) &&
+               Objects.equals(name, warehouse.name);
     }
     
     @Override
     public int hashCode() {
-        return Objects.hash(categoryId, name);
+        return Objects.hash(warehouseId, name);
     }
     
     @Override
     public String toString() {
-        return "Category{" +
-                "categoryId=" + categoryId +
+        return "Warehouse{" +
+                "warehouseId=" + warehouseId +
                 ", name='" + name + '\'' +
+                ", capacityUnits=" + capacityUnits +
                 ", isActive=" + isActive +
                 ", createdAt=" + createdAt +
                 '}';

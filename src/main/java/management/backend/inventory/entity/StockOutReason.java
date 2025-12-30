@@ -6,35 +6,25 @@ import java.time.LocalDateTime;
 import java.util.Objects;
 
 @Entity
-@Table(name = "categories", indexes = {
-    @Index(name = "idx_categories_name", columnList = "name"),
-    @Index(name = "idx_categories_is_active", columnList = "is_active")
+@Table(name = "stock_out_reasons", indexes = {
+    @Index(name = "idx_stock_out_reasons_active", columnList = "is_active")
 })
-public class Category {
+public class StockOutReason {
     
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "category_id")
-    private Long categoryId;
+    @Column(name = "reason_id")
+    private Long reasonId;
     
-    @NotBlank(message = "Category name is required")
-    @Column(name = "name", nullable = false, unique = true, length = 100)
-    private String name;
+    @NotBlank(message = "Reason name is required")
+    @Column(name = "reason_name", nullable = false, unique = true, length = 100)
+    private String reasonName;
     
     @Column(name = "description", columnDefinition = "TEXT")
     private String description;
     
-    @Column(name = "color", length = 7)
-    private String color;
-    
-    @Column(name = "icon", length = 50)
-    private String icon;
-    
     @Column(name = "is_active", nullable = false)
     private Boolean isActive = true;
-    
-    @Column(name = "display_order")
-    private Integer displayOrder = 0;
     
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -53,29 +43,29 @@ public class Category {
         updatedAt = LocalDateTime.now();
     }
     
-    public Category() {}
+    public StockOutReason() {}
     
-    public Category(String name, String description) {
-        this.name = name;
+    public StockOutReason(String reasonName, String description) {
+        this.reasonName = reasonName;
         this.description = description;
         this.isActive = true;
     }
     
     // Getters and Setters
-    public Long getCategoryId() {
-        return categoryId;
+    public Long getReasonId() {
+        return reasonId;
     }
     
-    public void setCategoryId(Long categoryId) {
-        this.categoryId = categoryId;
+    public void setReasonId(Long reasonId) {
+        this.reasonId = reasonId;
     }
     
-    public String getName() {
-        return name;
+    public String getReasonName() {
+        return reasonName;
     }
     
-    public void setName(String name) {
-        this.name = name;
+    public void setReasonName(String reasonName) {
+        this.reasonName = reasonName;
     }
     
     public String getDescription() {
@@ -86,36 +76,12 @@ public class Category {
         this.description = description;
     }
     
-    public String getColor() {
-        return color;
-    }
-    
-    public void setColor(String color) {
-        this.color = color;
-    }
-    
-    public String getIcon() {
-        return icon;
-    }
-    
-    public void setIcon(String icon) {
-        this.icon = icon;
-    }
-    
     public Boolean getIsActive() {
         return isActive;
     }
     
     public void setIsActive(Boolean isActive) {
         this.isActive = isActive;
-    }
-    
-    public Integer getDisplayOrder() {
-        return displayOrder;
-    }
-    
-    public void setDisplayOrder(Integer displayOrder) {
-        this.displayOrder = displayOrder;
     }
     
     public LocalDateTime getCreatedAt() {
@@ -138,21 +104,21 @@ public class Category {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        Category category = (Category) o;
-        return Objects.equals(categoryId, category.categoryId) &&
-               Objects.equals(name, category.name);
+        StockOutReason that = (StockOutReason) o;
+        return Objects.equals(reasonId, that.reasonId) &&
+               Objects.equals(reasonName, that.reasonName);
     }
     
     @Override
     public int hashCode() {
-        return Objects.hash(categoryId, name);
+        return Objects.hash(reasonId, reasonName);
     }
     
     @Override
     public String toString() {
-        return "Category{" +
-                "categoryId=" + categoryId +
-                ", name='" + name + '\'' +
+        return "StockOutReason{" +
+                "reasonId=" + reasonId +
+                ", reasonName='" + reasonName + '\'' +
                 ", isActive=" + isActive +
                 ", createdAt=" + createdAt +
                 '}';

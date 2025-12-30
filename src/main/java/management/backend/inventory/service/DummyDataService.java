@@ -10,11 +10,10 @@ import org.springframework.stereotype.Service;
 /**
  * Service for generating dummy inventory data for testing and development.
  * DISABLED: Dummy data has been removed for production safety.
- * This service is kept for reference only and is disabled via @Profile("dev-only").
+ * This service is kept for reference only.
  */
 @Service
 @Slf4j
-@Profile("dev-only")  // Only active in dev-only profile (never used)
 @RequiredArgsConstructor
 public class DummyDataService {
 

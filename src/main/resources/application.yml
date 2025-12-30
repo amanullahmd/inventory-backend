@@ -3,9 +3,9 @@ spring:
     name: inventory-backend
   
   datasource:
-    url: jdbc:postgresql://yamanote.proxy.rlwy.net:27420/railway?sslmode=require
-    username: postgres
-    password: YhcOdcREvaqNtgbrtTLnzSFxhvJdQxeU
+    url: jdbc:postgresql://${PGHOST:localhost}:${PGPORT:5432}/${PGDATABASE:inventory}?sslmode=${DB_SSL_MODE:disable}
+    username: ${PGUSER:postgres}
+    password: ${PGPASSWORD:postgres}
     driver-class-name: org.postgresql.Driver
     hikari:
       maximum-pool-size: 5
@@ -32,6 +32,7 @@ spring:
     validate-on-migrate: false
     out-of-order: false
     repair-on-migrate: true
+    ignore-migration-patterns: "*:V13__Seed_initial_data.sql"
 
 server:
   port: 8081
@@ -52,7 +53,7 @@ springdoc:
   api-docs:
     path: /v3/api-docs
   swagger-ui:
-    path: /swagger-ui.html
+    path: /swagger-ui/index.html
     enabled: true
     operations-sorter: method
     tags-sorter: alpha

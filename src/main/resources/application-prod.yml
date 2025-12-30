@@ -9,9 +9,9 @@ spring:
       enabled: false
   
   datasource:
-    url: jdbc:postgresql://${PGHOST:postgres.railway.internal}:${PGPORT:5432}/${PGDATABASE:railway}?sslmode=require
+    url: jdbc:postgresql://${PGHOST:localhost}:${PGPORT:5432}/${PGDATABASE:inventory}?sslmode=${DB_SSL_MODE:disable}&serverTimezone=UTC
     username: ${PGUSER:postgres}
-    password: ${PGPASSWORD}
+    password: ${PGPASSWORD:postgres}
     driver-class-name: org.postgresql.Driver
     hikari:
       maximum-pool-size: 20
@@ -20,6 +20,7 @@ spring:
       idle-timeout: 300000
       max-lifetime: 900000
       auto-commit: true
+      connection-test-query: SELECT 1
   
   jpa:
     hibernate:
@@ -32,6 +33,7 @@ spring:
         jdbc:
           batch_size: 50
         generate_statistics: false
+        dialect: org.hibernate.dialect.PostgreSQLDialect
   
   flyway:
     enabled: true
@@ -40,6 +42,8 @@ spring:
     validate-on-migrate: true
     out-of-order: false
     repair-on-migrate: false
+    schemas: public
+    ignore-migration-patterns: "*:V13__Seed_initial_data.sql"
 
 server:
   port: 8081

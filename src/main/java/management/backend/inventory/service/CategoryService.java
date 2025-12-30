@@ -35,7 +35,8 @@ public class CategoryService {
         }
         
         // Create and save the category
-        Category category = new Category(name, description, color);
+        Category category = new Category(name, description);
+        category.setColor(color);
         Category savedCategory = categoryRepository.save(category);
         
         return convertToResponse(savedCategory);
