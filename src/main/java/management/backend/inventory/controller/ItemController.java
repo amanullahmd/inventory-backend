@@ -114,4 +114,29 @@ public class ItemController {
         StatisticsResponse statistics = itemService.getStatistics();
         return ResponseEntity.ok(statistics);
     }
+
+    /**
+     * PUT /api/items/{itemId} - Update an existing item.
+     * Accessible to authenticated users.
+     */
+    @PutMapping("/{itemId}")
+    @PreAuthorize("isAuthenticated()")
+    @Operation(summary = "Update item", description = "Update item details like name, SKU, unit price, description, category")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Item updated successfully"),
+        @ApiResponse(responseCode = "400", description = "Invalid request body"),
+        @ApiResponse(responseCode = "401", description = "Unauthorized - authentication required"),
+        @ApiResponse(responseCode = "404", description = "Item not found")
+    })
+    @SecurityRequirement(name = "Bearer Authentication")
+    public ResponseEntity<ItemStockResponse> updateItem(@PathVariable Long itemId, @Valid @RequestBody CreateItemRequest request) {
+        if (!itemService.existsById(itemId)) {
+            return ResponseEntity.notFound().build();
+        }
+
+        Item updated = itemService.updateItem(itemId, request);
+        ItemStockResponse response = itemService.getItemWithStock(updated.getItemId())
+            .orElseThrow(() -> new RuntimeException("Failed to retrieve updated item"));
+        return ResponseEntity.ok(response);
+    }
 }

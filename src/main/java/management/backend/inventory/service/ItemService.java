@@ -76,6 +76,51 @@ public class ItemService {
         
         return itemRepository.save(item);
     }
+
+    /**
+     * Update an existing item.
+     * Allows correcting wrong information such as name, SKU, unit price, description and category.
+     */
+    public Item updateItem(Long itemId, CreateItemRequest request) {
+        Item item = itemRepository.findById(itemId)
+            .orElseThrow(() -> new IllegalArgumentException("Item not found: " + itemId));
+
+        // Validate SKU uniqueness if changed
+        if (request.getSku() != null && !request.getSku().isBlank()) {
+            Optional<Item> existingBySku = itemRepository.findBySku(request.getSku());
+            if (existingBySku.isPresent() && !existingBySku.get().getItemId().equals(itemId)) {
+                throw new IllegalArgumentException("Item with SKU '" + request.getSku() + "' already exists");
+            }
+            item.setSku(request.getSku());
+        }
+
+        if (request.getName() != null && !request.getName().isBlank()) {
+            item.setName(request.getName());
+        }
+
+        if (request.getUnitPrice() != null) {
+            item.setUnitPrice(request.getUnitPrice());
+        }
+
+        item.setDescription(request.getDescription());
+
+        if (request.getMinimumStock() != null) {
+            item.setMinimumStock(request.getMinimumStock());
+        }
+        if (request.getMaximumStock() != null) {
+            item.setMaximumStock(request.getMaximumStock());
+        }
+        if (request.getReorderLevel() != null) {
+            item.setReorderLevel(request.getReorderLevel());
+        }
+
+        if (request.getCategoryId() != null) {
+            Optional<Category> category = categoryRepository.findById(request.getCategoryId());
+            item.setCategory(category.orElse(null));
+        }
+
+        return itemRepository.save(item);
+    }
     
     /**
      * Retrieve all items with current stock calculations.
@@ -104,7 +149,8 @@ public class ItemService {
                 Integer totalStockIn = stockSummary != null ? stockSummary.getTotalIn() : 0;
                 Integer totalStockOut = stockSummary != null ? stockSummary.getTotalOut() : 0;
                 Integer currentStock = stockSummary != null ? stockSummary.getCurrentStock() : 0;
-                
+                Long categoryId = item.getCategory() != null ? item.getCategory().getCategoryId() : null;
+                String categoryName = item.getCategory() != null ? item.getCategory().getName() : null;
                 return new ItemStockResponse(
                     item.getItemId(),
                     item.getName(),
@@ -113,7 +159,9 @@ public class ItemService {
                     item.getCreatedAt(),
                     currentStock,
                     totalStockIn,
-                    totalStockOut
+                    totalStockOut,
+                    categoryId,
+                    categoryName
                 );
             })
             .collect(Collectors.toList());
@@ -152,7 +200,8 @@ public class ItemService {
         Integer totalStockIn = stockSummary != null ? stockSummary.getTotalIn() : 0;
         Integer totalStockOut = stockSummary != null ? stockSummary.getTotalOut() : 0;
         Integer currentStock = stockSummary != null ? stockSummary.getCurrentStock() : 0;
-        
+        Long categoryId = item.getCategory() != null ? item.getCategory().getCategoryId() : null;
+        String categoryName = item.getCategory() != null ? item.getCategory().getName() : null;
         ItemStockResponse response = new ItemStockResponse(
             item.getItemId(),
             item.getName(),
@@ -161,7 +210,9 @@ public class ItemService {
             item.getCreatedAt(),
             currentStock,
             totalStockIn,
-            totalStockOut
+            totalStockOut,
+            categoryId,
+            categoryName
         );
         
         return Optional.of(response);
@@ -190,7 +241,8 @@ public class ItemService {
                 Integer totalStockIn = stockSummary != null ? stockSummary.getTotalIn() : 0;
                 Integer totalStockOut = stockSummary != null ? stockSummary.getTotalOut() : 0;
                 Integer currentStock = stockSummary != null ? stockSummary.getCurrentStock() : 0;
-                
+                Long categoryId = item.getCategory() != null ? item.getCategory().getCategoryId() : null;
+                String categoryName = item.getCategory() != null ? item.getCategory().getName() : null;
                 return new ItemStockResponse(
                     item.getItemId(),
                     item.getName(),
@@ -199,7 +251,9 @@ public class ItemService {
                     item.getCreatedAt(),
                     currentStock,
                     totalStockIn,
-                    totalStockOut
+                    totalStockOut,
+                    categoryId,
+                    categoryName
                 );
             })
             .collect(Collectors.toList());

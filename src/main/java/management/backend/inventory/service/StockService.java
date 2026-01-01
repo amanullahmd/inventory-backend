@@ -169,7 +169,8 @@ public class StockService {
                 Integer totalStockIn = stockSummary != null ? stockSummary.getTotalIn() : 0;
                 Integer totalStockOut = stockSummary != null ? stockSummary.getTotalOut() : 0;
                 Integer currentStock = stockSummary != null ? stockSummary.getCurrentStock() : 0;
-                
+                Long categoryId = item.getCategory() != null ? item.getCategory().getCategoryId() : null;
+                String categoryName = item.getCategory() != null ? item.getCategory().getName() : null;
                 return new ItemStockResponse(
                     item.getItemId(),
                     item.getName(),
@@ -178,7 +179,9 @@ public class StockService {
                     item.getCreatedAt(),
                     currentStock,
                     totalStockIn,
-                    totalStockOut
+                    totalStockOut,
+                    categoryId,
+                    categoryName
                 );
             })
             .collect(Collectors.toList());
@@ -203,6 +206,8 @@ public class StockService {
         Integer totalStockOut = stockSummary != null ? stockSummary.getTotalOut() : 0;
         Integer currentStock = stockSummary != null ? stockSummary.getCurrentStock() : 0;
         
+        Long categoryId = item.getCategory() != null ? item.getCategory().getCategoryId() : null;
+        String categoryName = item.getCategory() != null ? item.getCategory().getName() : null;
         ItemStockResponse response = new ItemStockResponse(
             item.getItemId(),
             item.getName(),
@@ -211,7 +216,9 @@ public class StockService {
             item.getCreatedAt(),
             currentStock,
             totalStockIn,
-            totalStockOut
+            totalStockOut,
+            categoryId,
+            categoryName
         );
         
         return Optional.of(response);

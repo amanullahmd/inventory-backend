@@ -13,14 +13,17 @@ public class ItemStockResponse {
     private Integer currentStock;
     private Integer totalStockIn;
     private Integer totalStockOut;
+    private Long categoryId;
+    private String categoryName;
     
     // Default constructor
     public ItemStockResponse() {}
     
     // Constructor
-    public ItemStockResponse(Long itemId, String name, String sku, BigDecimal unitPrice, 
-                           LocalDateTime createdAt, Integer currentStock, 
-                           Integer totalStockIn, Integer totalStockOut) {
+    public ItemStockResponse(Long itemId, String name, String sku, BigDecimal unitPrice,
+                             LocalDateTime createdAt, Integer currentStock,
+                             Integer totalStockIn, Integer totalStockOut,
+                             Long categoryId, String categoryName) {
         this.itemId = itemId;
         this.name = name;
         this.sku = sku;
@@ -29,6 +32,8 @@ public class ItemStockResponse {
         this.currentStock = currentStock;
         this.totalStockIn = totalStockIn;
         this.totalStockOut = totalStockOut;
+        this.categoryId = categoryId;
+        this.categoryName = categoryName;
     }
     
     // Getters and Setters
@@ -96,6 +101,22 @@ public class ItemStockResponse {
         this.totalStockOut = totalStockOut;
     }
     
+    public Long getCategoryId() {
+        return categoryId;
+    }
+    
+    public void setCategoryId(Long categoryId) {
+        this.categoryId = categoryId;
+    }
+    
+    public String getCategoryName() {
+        return categoryName;
+    }
+    
+    public void setCategoryName(String categoryName) {
+        this.categoryName = categoryName;
+    }
+    
     @Override
     public String toString() {
         return "ItemStockResponse{" +
@@ -106,6 +127,8 @@ public class ItemStockResponse {
                 ", currentStock=" + currentStock +
                 ", totalStockIn=" + totalStockIn +
                 ", totalStockOut=" + totalStockOut +
+                ", categoryId=" + categoryId +
+                ", categoryName='" + categoryName + '\'' +
                 '}';
     }
 }

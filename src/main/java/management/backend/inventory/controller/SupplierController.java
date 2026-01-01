@@ -1,0 +1,57 @@
+package management.backend.inventory.controller;
+
+import management.backend.inventory.dto.CreateSupplierRequest;
+import management.backend.inventory.entity.Supplier;
+import management.backend.inventory.service.SupplierService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
+
+import jakarta.validation.Valid;
+import java.util.List;
+
+@RestController
+@RequestMapping("/suppliers")
+@Validated
+@Tag(name = "Suppliers", description = "Supplier management endpoints")
+public class SupplierController {
+
+    private final SupplierService supplierService;
+
+    public SupplierController(SupplierService supplierService) {
+        this.supplierService = supplierService;
+    }
+
+    @GetMapping
+    @PreAuthorize("isAuthenticated()")
+    @Operation(summary = "Get suppliers", description = "Retrieve all suppliers")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Suppliers retrieved successfully"),
+        @ApiResponse(responseCode = "401", description = "Unauthorized")
+    })
+    @SecurityRequirement(name = "Bearer Authentication")
+    public ResponseEntity<List<Supplier>> getSuppliers() {
+        return ResponseEntity.ok(supplierService.getAllSuppliers());
+    }
+
+    @PostMapping
+    @PreAuthorize("isAuthenticated()")
+    @Operation(summary = "Create supplier", description = "Create a new supplier")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "201", description = "Supplier created successfully"),
+        @ApiResponse(responseCode = "400", description = "Invalid request body"),
+        @ApiResponse(responseCode = "401", description = "Unauthorized")
+    })
+    @SecurityRequirement(name = "Bearer Authentication")
+    public ResponseEntity<Supplier> createSupplier(@Valid @RequestBody CreateSupplierRequest request) {
+        Supplier created = supplierService.createSupplier(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(created);
+    }
+}
