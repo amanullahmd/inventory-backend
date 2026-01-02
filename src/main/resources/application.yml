@@ -32,7 +32,6 @@ spring:
     validate-on-migrate: false
     out-of-order: false
     repair-on-migrate: true
-    ignore-migration-patterns: "*:V13__Seed_initial_data.sql"
 
 server:
   port: 8081

@@ -39,15 +39,15 @@ server:
   servlet:
     context-path: /api
 
-  logging:
-    level:
-      root: INFO
-      org.springframework.security: INFO
-      org.springframework.web: INFO
-      management.backend.inventory: DEBUG
-      org.springdoc: DEBUG
-    pattern:
-      console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+logging:
+  level:
+    root: INFO
+    org.springframework.security: INFO
+    org.springframework.web: INFO
+    management.backend.inventory: DEBUG
+    org.springdoc: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
 
 springdoc:
   api-docs:
