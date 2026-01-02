@@ -9,7 +9,8 @@ import java.util.Objects;
 @Entity
 @Table(name = "suppliers", indexes = {
     @Index(name = "idx_suppliers_name", columnList = "name"),
-    @Index(name = "idx_suppliers_active", columnList = "is_active")
+    @Index(name = "idx_suppliers_active", columnList = "is_active"),
+    @Index(name = "idx_suppliers_status", columnList = "status")
 })
 public class Supplier {
     
@@ -35,8 +36,15 @@ public class Supplier {
     @Column(name = "contact_person", length = 100)
     private String contactPerson;
     
+    @Column(name = "registration_number", length = 100, unique = false)
+    private String registrationNumber;
+    
     @Column(name = "is_active", nullable = false)
     private Boolean isActive = true;
+    
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false, length = 20)
+    private SupplierStatus status = SupplierStatus.ACTIVE;
     
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -113,12 +121,30 @@ public class Supplier {
         this.contactPerson = contactPerson;
     }
     
+    public String getRegistrationNumber() {
+        return registrationNumber;
+    }
+    
+    public void setRegistrationNumber(String registrationNumber) {
+        this.registrationNumber = registrationNumber;
+    }
+    
     public Boolean getIsActive() {
         return isActive;
     }
     
     public void setIsActive(Boolean isActive) {
         this.isActive = isActive;
+        this.status = (isActive != null && isActive) ? SupplierStatus.ACTIVE : SupplierStatus.INACTIVE;
+    }
+    
+    public SupplierStatus getStatus() {
+        return status;
+    }
+    
+    public void setStatus(SupplierStatus status) {
+        this.status = status;
+        this.isActive = (status == SupplierStatus.ACTIVE);
     }
     
     public LocalDateTime getCreatedAt() {

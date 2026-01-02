@@ -8,7 +8,9 @@ import java.util.Objects;
 @Entity
 @Table(name = "warehouses", indexes = {
     @Index(name = "idx_warehouses_name", columnList = "name"),
-    @Index(name = "idx_warehouses_active", columnList = "is_active")
+    @Index(name = "idx_warehouses_active", columnList = "is_active"),
+    @Index(name = "idx_warehouses_code", columnList = "warehouse_code"),
+    @Index(name = "idx_warehouses_status", columnList = "status")
 })
 public class Warehouse {
     
@@ -21,6 +23,9 @@ public class Warehouse {
     @Column(name = "name", nullable = false, length = 100)
     private String name;
     
+    @Column(name = "warehouse_code", length = 100)
+    private String warehouseCode;
+    
     @Column(name = "address", columnDefinition = "TEXT")
     private String address;
     
@@ -29,6 +34,10 @@ public class Warehouse {
     
     @Column(name = "is_active", nullable = false)
     private Boolean isActive = true;
+    
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false, length = 20)
+    private WarehouseStatus status = WarehouseStatus.ACTIVE;
     
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -72,6 +81,14 @@ public class Warehouse {
         this.name = name;
     }
     
+    public String getWarehouseCode() {
+        return warehouseCode;
+    }
+    
+    public void setWarehouseCode(String warehouseCode) {
+        this.warehouseCode = warehouseCode;
+    }
+    
     public String getAddress() {
         return address;
     }
@@ -94,6 +111,16 @@ public class Warehouse {
     
     public void setIsActive(Boolean isActive) {
         this.isActive = isActive;
+        this.status = (isActive != null && isActive) ? WarehouseStatus.ACTIVE : WarehouseStatus.INACTIVE;
+    }
+    
+    public WarehouseStatus getStatus() {
+        return status;
+    }
+    
+    public void setStatus(WarehouseStatus status) {
+        this.status = status;
+        this.isActive = (status == WarehouseStatus.ACTIVE);
     }
     
     public LocalDateTime getCreatedAt() {

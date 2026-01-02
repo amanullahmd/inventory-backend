@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
 import java.util.List;
+import management.backend.inventory.dto.UpdateWarehouseRequest;
 
 @RestController
 @RequestMapping("/warehouses")
@@ -54,4 +55,35 @@ public class WarehouseController {
         Warehouse created = warehouseService.createWarehouse(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
+    
+    @PutMapping("/{id}")
+    @PreAuthorize("isAuthenticated()")
+    @Operation(summary = "Update warehouse", description = "Update warehouse details")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Warehouse updated successfully"),
+        @ApiResponse(responseCode = "400", description = "Invalid request body"),
+        @ApiResponse(responseCode = "401", description = "Unauthorized"),
+        @ApiResponse(responseCode = "404", description = "Warehouse not found")
+    })
+    @SecurityRequirement(name = "Bearer Authentication")
+    public ResponseEntity<Warehouse> updateWarehouse(@PathVariable Long id, @Valid @RequestBody UpdateWarehouseRequest request) {
+        Warehouse updated = warehouseService.updateWarehouse(id, request);
+        return ResponseEntity.ok(updated);
+    }
+    
+    @PatchMapping("/{id}/status")
+    @PreAuthorize("isAuthenticated()")
+    @Operation(summary = "Set warehouse active", description = "Activate or deactivate a warehouse")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Warehouse status updated successfully"),
+        @ApiResponse(responseCode = "401", description = "Unauthorized"),
+        @ApiResponse(responseCode = "404", description = "Warehouse not found")
+    })
+    @SecurityRequirement(name = "Bearer Authentication")
+    public ResponseEntity<Warehouse> setActive(@PathVariable Long id, @RequestParam("active") Boolean active) {
+        Warehouse updated = warehouseService.setActive(id, active);
+        return ResponseEntity.ok(updated);
+    }
+    
+    // Deletion disabled by business rule
 }

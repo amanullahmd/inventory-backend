@@ -39,6 +39,12 @@ public class User implements UserDetails {
     @Column(name = "name", nullable = true, length = 255)
     private String name;
 
+    @Column(name = "position", length = 100)
+    private String position;
+
+    @Column(name = "grade", length = 50)
+    private String grade;
+
     @Column(name = "enabled", nullable = false)
     private Boolean enabled = true;
 
@@ -123,6 +129,22 @@ public class User implements UserDetails {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getPosition() {
+        return position;
+    }
+
+    public void setPosition(String position) {
+        this.position = position;
+    }
+
+    public String getGrade() {
+        return grade;
+    }
+
+    public void setGrade(String grade) {
+        this.grade = grade;
     }
 
     public Boolean getEnabled() {

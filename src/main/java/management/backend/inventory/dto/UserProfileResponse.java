@@ -15,6 +15,8 @@ public class UserProfileResponse {
     private String name;
     private String email;
     private String branchName;
+    private String position;
+    private String grade;
     private List<String> roles;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
@@ -27,6 +29,8 @@ public class UserProfileResponse {
         this.name = user.getName();
         this.email = user.getEmail();
         this.branchName = null; // Branch name no longer exists in User entity
+        this.position = user.getPosition();
+        this.grade = user.getGrade();
         this.roles = List.of(user.getRole().getAuthority());
         this.createdAt = user.getCreatedAt();
         this.updatedAt = user.getUpdatedAt();
@@ -63,6 +67,22 @@ public class UserProfileResponse {
     
     public void setBranchName(String branchName) {
         this.branchName = branchName;
+    }
+
+    public String getPosition() {
+        return position;
+    }
+
+    public void setPosition(String position) {
+        this.position = position;
+    }
+
+    public String getGrade() {
+        return grade;
+    }
+
+    public void setGrade(String grade) {
+        this.grade = grade;
     }
     
     public List<String> getRoles() {

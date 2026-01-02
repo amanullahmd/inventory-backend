@@ -16,8 +16,9 @@ public class UserProfileRequest {
     @NotBlank(message = "Email is required and cannot be blank")
     private String email;
     
-    @NotBlank(message = "Branch name is required and cannot be blank")
     private String branchName;
+    private String position;
+    private String grade;
     
     // Constructors
     public UserProfileRequest() {}
@@ -51,6 +52,22 @@ public class UserProfileRequest {
     
     public void setBranchName(String branchName) {
         this.branchName = branchName;
+    }
+    
+    public String getPosition() {
+        return position;
+    }
+    
+    public void setPosition(String position) {
+        this.position = position;
+    }
+    
+    public String getGrade() {
+        return grade;
+    }
+    
+    public void setGrade(String grade) {
+        this.grade = grade;
     }
     
     @Override

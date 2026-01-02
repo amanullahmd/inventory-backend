@@ -78,6 +78,12 @@ public class NativeUserService {
         if (request.getName() != null) {
             user.setName(request.getName());
         }
+        if (request.getPosition() != null) {
+            user.setPosition(request.getPosition());
+        }
+        if (request.getGrade() != null) {
+            user.setGrade(request.getGrade());
+        }
 
         User updatedUser = userRepository.save(user);
         return new UserProfileResponse(updatedUser);

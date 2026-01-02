@@ -11,4 +11,5 @@ import java.util.Optional;
 public interface SupplierRepository extends JpaRepository<Supplier, Long> {
     Optional<Supplier> findByName(String name);
     List<Supplier> findByIsActive(Boolean isActive);
+    Optional<Supplier> findByRegistrationNumber(String registrationNumber);
 }
