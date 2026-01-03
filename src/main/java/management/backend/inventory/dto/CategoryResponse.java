@@ -12,6 +12,7 @@ public class CategoryResponse {
     private String name;
     private String description;
     private String color;
+    private String categoryCode;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     
@@ -19,11 +20,12 @@ public class CategoryResponse {
     public CategoryResponse() {}
     
     // Constructor
-    public CategoryResponse(Long categoryId, String name, String description, String color, LocalDateTime createdAt, LocalDateTime updatedAt) {
+    public CategoryResponse(Long categoryId, String name, String description, String color, String categoryCode, LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.categoryId = categoryId;
         this.name = name;
         this.description = description;
         this.color = color;
+        this.categoryCode = categoryCode;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
     }
@@ -59,6 +61,14 @@ public class CategoryResponse {
     
     public void setColor(String color) {
         this.color = color;
+    }
+    
+    public String getCategoryCode() {
+        return categoryCode;
+    }
+    
+    public void setCategoryCode(String categoryCode) {
+        this.categoryCode = categoryCode;
     }
     
     public LocalDateTime getCreatedAt() {

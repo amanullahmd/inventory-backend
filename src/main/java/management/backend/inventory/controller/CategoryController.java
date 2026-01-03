@@ -60,13 +60,14 @@ public class CategoryController {
         String name = request.get("name");
         String description = request.get("description");
         String color = request.getOrDefault("color", "#3B82F6"); // Default blue color
+        String code = request.get("code");
         
         if (name == null || name.isBlank()) {
             return ResponseEntity.badRequest().build();
         }
         
         try {
-            CategoryResponse category = categoryService.createCategory(name, description, color);
+            CategoryResponse category = categoryService.createCategory(name, description, color, code);
             return ResponseEntity.status(HttpStatus.CREATED).body(category);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().build();
@@ -85,31 +86,19 @@ public class CategoryController {
         String name = request.get("name");
         String description = request.get("description");
         String color = request.getOrDefault("color", "#3B82F6"); // Default blue color
+        String code = request.get("code");
         
         if (name == null || name.isBlank()) {
             return ResponseEntity.badRequest().build();
         }
         
         try {
-            CategoryResponse category = categoryService.updateCategory(categoryId, name, description, color);
+            CategoryResponse category = categoryService.updateCategory(categoryId, name, description, color, code);
             return ResponseEntity.ok(category);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.notFound().build();
         }
     }
     
-    /**
-     * DELETE /api/categories/{categoryId} - Delete a category.
-     * Accessible to authenticated users (both Admin and User roles)
-     */
-    @DeleteMapping("/{categoryId}")
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<Void> deleteCategory(@PathVariable Long categoryId) {
-        try {
-            categoryService.deleteCategory(categoryId);
-            return ResponseEntity.noContent().build();
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.notFound().build();
-        }
-    }
+    // Deletion disabled by business rule
 }

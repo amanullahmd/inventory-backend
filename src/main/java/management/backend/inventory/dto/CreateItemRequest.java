@@ -19,10 +19,9 @@ public class CreateItemRequest {
     @NotBlank(message = "SKU is required and cannot be blank")
     private String sku;
     
-    @NotNull(message = "Unit price is required")
-    @DecimalMin(value = "0.00", message = "Unit price must be non-negative")
     private BigDecimal unitPrice;
     
+    @NotNull(message = "Category is required")
     private Long categoryId;
     
     private String description;

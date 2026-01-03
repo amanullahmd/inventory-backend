@@ -30,7 +30,7 @@ public class Item {
     private Long itemId;
     
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "category_id", nullable = true)
+    @JoinColumn(name = "category_id", nullable = false)
     private Category category;
     
     @NotBlank(message = "Name is required and cannot be blank")
@@ -44,9 +44,8 @@ public class Item {
     @Column(name = "description", columnDefinition = "TEXT")
     private String description;
     
-    @NotNull(message = "Unit price is required")
     @DecimalMin(value = "0.00", message = "Unit price must be non-negative")
-    @Column(name = "unit_price", nullable = false, precision = 12, scale = 2)
+    @Column(name = "unit_price", nullable = true, precision = 12, scale = 2)
     private BigDecimal unitPrice;
     
     @Min(value = 0, message = "Current stock must be non-negative")

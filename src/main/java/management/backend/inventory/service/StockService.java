@@ -2,14 +2,20 @@ package management.backend.inventory.service;
 
 import management.backend.inventory.dto.ItemStockResponse;
 import management.backend.inventory.dto.StockMovementRequest;
+import management.backend.inventory.dto.StockInBatchRequest;
+import management.backend.inventory.dto.StockInBatchRequest.StockInLine;
 import management.backend.inventory.entity.Item;
 import management.backend.inventory.entity.MovementType;
 import management.backend.inventory.entity.StockMovement;
 import management.backend.inventory.entity.StockOutReasonEnum;
 import management.backend.inventory.entity.User;
+import management.backend.inventory.entity.Supplier;
+import management.backend.inventory.entity.Warehouse;
 import management.backend.inventory.repository.ItemRepository;
 import management.backend.inventory.repository.StockMovementRepository;
 import management.backend.inventory.repository.UserRepository;
+import management.backend.inventory.repository.SupplierRepository;
+import management.backend.inventory.repository.WarehouseRepository;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,11 +37,15 @@ public class StockService {
     private final StockMovementRepository stockMovementRepository;
     private final ItemRepository itemRepository;
     private final UserRepository userRepository;
+    private final SupplierRepository supplierRepository;
+    private final WarehouseRepository warehouseRepository;
     
-    public StockService(StockMovementRepository stockMovementRepository, ItemRepository itemRepository, UserRepository userRepository) {
+    public StockService(StockMovementRepository stockMovementRepository, ItemRepository itemRepository, UserRepository userRepository, SupplierRepository supplierRepository, WarehouseRepository warehouseRepository) {
         this.stockMovementRepository = stockMovementRepository;
         this.itemRepository = itemRepository;
         this.userRepository = userRepository;
+        this.supplierRepository = supplierRepository;
+        this.warehouseRepository = warehouseRepository;
     }
     
     /**
@@ -50,8 +60,7 @@ public class StockService {
         }
         
         Item item = itemOpt.get();
-        User currentUser = userRepository.findByEmail(authentication.getName())
-            .orElseThrow(() -> new IllegalArgumentException("User not found"));
+        User currentUser = resolveCurrentUser(authentication);
         
         Long previousStock = item.getCurrentStock();
         Long newStock = previousStock + request.getQuantity();
@@ -68,12 +77,130 @@ public class StockService {
         
         movement.setReferenceNumber(request.getReferenceNumber());
         movement.setNotes(request.getNotes());
+        // supplier/warehouse may be set via batch endpoint; keep null here
         
         // Update item stock
         item.setCurrentStock(newStock);
         itemRepository.save(item);
         
         return stockMovementRepository.save(movement);
+    }
+    
+    /**
+     * Record stock-in batch with a shared reference number and supplier/warehouse.
+     */
+    public List<StockMovement> recordStockInBatch(StockInBatchRequest request, Authentication authentication) {
+        if (request.getItems() == null || request.getItems().isEmpty()) {
+            throw new IllegalArgumentException("At least one item is required");
+        }
+        Supplier supplier = supplierRepository.findById(request.getSupplierId())
+            .orElseThrow(() -> new IllegalArgumentException("Supplier not found"));
+        Warehouse warehouse = warehouseRepository.findById(request.getWarehouseId())
+            .orElseThrow(() -> new IllegalArgumentException("Warehouse not found"));
+        if (Boolean.FALSE.equals(supplier.getIsActive()) || Boolean.FALSE.equals(warehouse.getIsActive())) {
+            throw new IllegalArgumentException("Supplier or warehouse is inactive");
+        }
+        User currentUser = resolveCurrentUser(authentication);
+        String ref = request.getReferenceNumber() != null && !request.getReferenceNumber().isBlank()
+            ? request.getReferenceNumber()
+            : generateReferenceNumber();
+        
+        return request.getItems().stream().map(line -> {
+            Item item = itemRepository.findById(line.getItemId())
+                .orElseThrow(() -> new IllegalArgumentException("Item not found: " + line.getItemId()));
+            Long previousStock = item.getCurrentStock();
+            Long newStock = previousStock + line.getQuantity();
+            StockMovement movement = new StockMovement(
+                item, currentUser, MovementType.IN, line.getQuantity(), previousStock, newStock
+            );
+            movement.setReferenceNumber(ref);
+            movement.setNotes(request.getNotes());
+            movement.setSupplier(supplier);
+            movement.setWarehouse(warehouse);
+            item.setCurrentStock(newStock);
+            itemRepository.save(item);
+            return stockMovementRepository.save(movement);
+        }).collect(Collectors.toList());
+    }
+    
+    @Transactional(readOnly = true)
+    public List<java.util.Map<String, Object>> getStockInDetails(String referenceNumber) {
+        List<StockMovement> movements = stockMovementRepository.findByReferenceNumber(referenceNumber);
+        return movements.stream()
+            .map(m -> java.util.Map.<String, Object>of(
+                "itemId", m.getItem().getItemId(),
+                "sku", m.getItem().getSku(),
+                "name", m.getItem().getName(),
+                "quantity", m.getQuantity(),
+                "createdAt", m.getCreatedAt(),
+                "supplierId", m.getSupplier() != null ? m.getSupplier().getSupplierId() : null,
+                "warehouseId", m.getWarehouse() != null ? m.getWarehouse().getWarehouseId() : null
+            ))
+            .collect(Collectors.toList());
+    }
+    
+    @Transactional
+    public void deleteStockIn(String referenceNumber) {
+        List<StockMovement> movements = stockMovementRepository.findByReferenceNumber(referenceNumber);
+        if (movements.isEmpty()) return;
+        java.time.LocalDate today = java.time.LocalDate.now();
+        boolean sameDay = movements.stream().allMatch(m -> m.getCreatedAt().toLocalDate().equals(today));
+        if (!sameDay) {
+            throw new IllegalArgumentException("Cannot modify past stock-in batches");
+        }
+        for (StockMovement m : movements) {
+            Item item = m.getItem();
+            item.setCurrentStock(item.getCurrentStock() - m.getQuantity());
+            itemRepository.save(item);
+        }
+        stockMovementRepository.deleteByReferenceNumber(referenceNumber);
+    }
+    
+    @Transactional
+    public void updateStockIn(String referenceNumber, StockInBatchRequest request, Authentication authentication) {
+        deleteStockIn(referenceNumber);
+        // Recreate with the same reference number
+        Supplier supplier = supplierRepository.findById(request.getSupplierId())
+            .orElseThrow(() -> new IllegalArgumentException("Supplier not found"));
+        Warehouse warehouse = warehouseRepository.findById(request.getWarehouseId())
+            .orElseThrow(() -> new IllegalArgumentException("Warehouse not found"));
+        if (Boolean.FALSE.equals(supplier.getIsActive()) || Boolean.FALSE.equals(warehouse.getIsActive())) {
+            throw new IllegalArgumentException("Supplier or warehouse is inactive");
+        }
+        User currentUser = resolveCurrentUser(authentication);
+        List<StockInLine> lines = request.getItems();
+        if (lines == null || lines.isEmpty()) throw new IllegalArgumentException("No items provided");
+        for (StockInLine line : lines) {
+            Item item = itemRepository.findById(line.getItemId())
+                .orElseThrow(() -> new IllegalArgumentException("Item not found: " + line.getItemId()));
+            Long previousStock = item.getCurrentStock();
+            Long newStock = previousStock + line.getQuantity();
+            StockMovement movement = new StockMovement(item, currentUser, MovementType.IN, line.getQuantity(), previousStock, newStock);
+            movement.setReferenceNumber(referenceNumber);
+            movement.setNotes(request.getNotes());
+            movement.setSupplier(supplier);
+            movement.setWarehouse(warehouse);
+            item.setCurrentStock(newStock);
+            itemRepository.save(item);
+            stockMovementRepository.save(movement);
+        }
+    }
+    
+    private String generateReferenceNumber() {
+        java.time.LocalDateTime now = java.time.LocalDateTime.now();
+        return String.format("SI-%s", now.format(java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss")));
+    }
+    
+    private User resolveCurrentUser(Authentication authentication) {
+        String name = authentication.getName();
+        try {
+            Long userId = Long.parseLong(name);
+            return userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+        } catch (NumberFormatException e) {
+            return userRepository.findByEmail(name)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+        }
     }
     
     /**
@@ -270,6 +397,30 @@ public class StockService {
     @Transactional(readOnly = true)
     public List<StockMovement> getRecentStockMovements() {
         return stockMovementRepository.findRecentMovements();
+    }
+    
+    @Transactional(readOnly = true)
+    public List<java.util.Map<String, Object>> getStockInSummaries() {
+        List<StockMovement> ins = getStockInTransactions();
+        java.util.Map<String, java.util.List<StockMovement>> grouped = ins.stream()
+            .filter(m -> m.getReferenceNumber() != null && !m.getReferenceNumber().isBlank())
+            .collect(java.util.stream.Collectors.groupingBy(StockMovement::getReferenceNumber));
+        java.util.List<java.util.Map<String, Object>> summaries = new java.util.ArrayList<>();
+        for (var entry : grouped.entrySet()) {
+            String ref = entry.getKey();
+            java.util.List<StockMovement> rows = entry.getValue();
+            StockMovement first = rows.get(0);
+            String createdBy = first.getUser() != null ? first.getUser().getName() : null;
+            java.time.LocalDateTime createdAt = first.getCreatedAt();
+            summaries.add(java.util.Map.of(
+                "referenceNumber", ref,
+                "count", rows.size(),
+                "createdBy", createdBy,
+                "createdAt", createdAt
+            ));
+        }
+        summaries.sort((a,b) -> ((java.time.LocalDateTime)b.get("createdAt")).compareTo((java.time.LocalDateTime)a.get("createdAt")));
+        return summaries;
     }
 
     /**

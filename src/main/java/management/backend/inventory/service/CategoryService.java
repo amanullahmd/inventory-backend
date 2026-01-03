@@ -28,15 +28,22 @@ public class CategoryService {
      * Create a new category.
      * Requirements: 3.1 - Category creation with validation
      */
-    public CategoryResponse createCategory(String name, String description, String color) {
+    public CategoryResponse createCategory(String name, String description, String color, String code) {
         // Validate that category name is unique
         if (categoryRepository.existsByNameIgnoreCase(name)) {
             throw new IllegalArgumentException("Category with name '" + name + "' already exists");
+        }
+        if (code == null || code.isBlank()) {
+            throw new IllegalArgumentException("Category code is required");
+        }
+        if (categoryRepository.existsByCategoryCode(code)) {
+            throw new IllegalArgumentException("Category code '" + code + "' already exists");
         }
         
         // Create and save the category
         Category category = new Category(name, description);
         category.setColor(color);
+        category.setCategoryCode(code);
         Category savedCategory = categoryRepository.save(category);
         
         return convertToResponse(savedCategory);
@@ -73,7 +80,7 @@ public class CategoryService {
     /**
      * Update a category.
      */
-    public CategoryResponse updateCategory(Long categoryId, String name, String description, String color) {
+    public CategoryResponse updateCategory(Long categoryId, String name, String description, String color, String code) {
         Category category = categoryRepository.findById(categoryId)
             .orElseThrow(() -> new IllegalArgumentException("Category not found with ID: " + categoryId));
         
@@ -81,6 +88,14 @@ public class CategoryService {
         if (!category.getName().equalsIgnoreCase(name) && categoryRepository.existsByNameIgnoreCase(name)) {
             throw new IllegalArgumentException("Category with name '" + name + "' already exists");
         }
+        if (code == null || code.isBlank()) {
+            throw new IllegalArgumentException("Category code is required");
+        }
+        Optional<Category> existing = categoryRepository.findByCategoryCode(code);
+        if (existing.isPresent() && !existing.get().getCategoryId().equals(categoryId)) {
+            throw new IllegalArgumentException("Category code '" + code + "' already exists");
+        }
+        category.setCategoryCode(code);
         
         category.setName(name);
         category.setDescription(description);
@@ -117,6 +132,7 @@ public class CategoryService {
             category.getName(),
             category.getDescription(),
             category.getColor(),
+            category.getCategoryCode(),
             category.getCreatedAt(),
             category.getUpdatedAt()
         );

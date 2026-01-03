@@ -3,10 +3,12 @@ package management.backend.inventory.controller;
 import management.backend.inventory.dto.ItemStockResponse;
 import management.backend.inventory.dto.ReasonBreakdownResponse;
 import management.backend.inventory.dto.StockMovementRequest;
+import management.backend.inventory.dto.StockInBatchRequest;
 import management.backend.inventory.dto.StockOutReasonResponse;
 import management.backend.inventory.entity.StockMovement;
 import management.backend.inventory.service.StockOutReasonService;
 import management.backend.inventory.service.StockService;
+import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -17,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Controller for stock movement endpoints.
@@ -43,10 +46,18 @@ public class StockController {
      * Accessible to User role only (Admins cannot perform stock operations)
      */
     @PostMapping("/in")
-    @PreAuthorize("hasRole('USER') and !hasRole('ADMIN')")
-    public ResponseEntity<StockMovement> recordStockIn(@Valid @RequestBody StockMovementRequest request, Authentication authentication) {
-        StockMovement movement = stockService.recordStockIn(request, authentication);
-        return ResponseEntity.status(HttpStatus.CREATED).body(movement);
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<java.util.Map<String, Object>> recordStockIn(@Valid @RequestBody StockMovementRequest request, Authentication authentication) {
+        try {
+            StockMovement movement = stockService.recordStockIn(request, authentication);
+            java.util.Map<String, Object> body = new java.util.HashMap<>();
+            body.put("id", movement.getStockMovementId());
+            body.put("referenceNumber", movement.getReferenceNumber());
+            body.put("createdAt", movement.getCreatedAt());
+            return ResponseEntity.status(HttpStatus.CREATED).body(body);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(java.util.Map.of("message", e.getMessage()));
+        }
     }
     
     /**
@@ -60,6 +71,62 @@ public class StockController {
     public ResponseEntity<StockMovement> recordStockOut(@Valid @RequestBody StockMovementRequest request, Authentication authentication) {
         StockMovement movement = stockService.recordStockOut(request, authentication);
         return ResponseEntity.status(HttpStatus.CREATED).body(movement);
+    }
+    
+    @PostMapping("/in/batch")
+    @PreAuthorize("isAuthenticated()")
+    @Operation(summary = "Create stock-in batch", description = "Record multiple stock-in items under one reference id")
+    public ResponseEntity<java.util.Map<String, Object>> recordStockInBatch(@Valid @RequestBody StockInBatchRequest request, Authentication authentication) {
+        try {
+            List<StockMovement> movements = stockService.recordStockInBatch(request, authentication);
+            String ref = movements.isEmpty() ? null : movements.get(0).getReferenceNumber();
+            return ResponseEntity.status(HttpStatus.CREATED).body(java.util.Map.of("referenceNumber", ref, "count", movements.size()));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(java.util.Map.of("message", e.getMessage()));
+        }
+    }
+    
+    @GetMapping("/in/grouped")
+    @PreAuthorize("isAuthenticated()")
+    @Operation(summary = "List stock-in groups", description = "List stock-in transactions grouped by reference number with creator and date")
+    public ResponseEntity<List<java.util.Map<String, Object>>> getStockInGroups() {
+        return ResponseEntity.ok(stockService.getStockInSummaries());
+    }
+    
+    @GetMapping("/in/{referenceNumber}")
+    @PreAuthorize("isAuthenticated()")
+    @Operation(summary = "Get stock-in by reference", description = "Retrieve stock-in items for a reference id")
+    public ResponseEntity<List<java.util.Map<String, Object>>> getStockInByReference(@PathVariable String referenceNumber) {
+        List<java.util.Map<String, Object>> details = stockService.getStockInDetails(referenceNumber);
+        return ResponseEntity.ok(details);
+    }
+    
+    @PutMapping("/in/{referenceNumber}")
+    @PreAuthorize("isAuthenticated()")
+    @Operation(summary = "Update stock-in batch", description = "Update items for a stock-in ID; allowed only same day")
+    public ResponseEntity<java.util.Map<String, Object>> updateStockIn(
+        @PathVariable String referenceNumber,
+        @Valid @RequestBody StockInBatchRequest request,
+        Authentication authentication
+    ) {
+        try {
+            stockService.updateStockIn(referenceNumber, request, authentication);
+            return ResponseEntity.ok(java.util.Map.of("referenceNumber", referenceNumber));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(java.util.Map.of("message", e.getMessage()));
+        }
+    }
+    
+    @DeleteMapping("/in/{referenceNumber}")
+    @PreAuthorize("isAuthenticated()")
+    @Operation(summary = "Delete stock-in batch", description = "Delete items for a stock-in ID; allowed only same day")
+    public ResponseEntity<Void> deleteStockIn(@PathVariable String referenceNumber) {
+        try {
+            stockService.deleteStockIn(referenceNumber);
+            return ResponseEntity.noContent().build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        }
     }
     
     /**

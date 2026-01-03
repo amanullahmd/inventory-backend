@@ -67,6 +67,14 @@ public class StockMovement {
     @Column(name = "reason_type", length = 50)
     private StockOutReasonEnum reasonType;
     
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "supplier_id")
+    private Supplier supplier;
+    
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "warehouse_id")
+    private Warehouse warehouse;
+    
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
     
@@ -192,6 +200,22 @@ public class StockMovement {
     
     public void setReasonType(StockOutReasonEnum reasonType) {
         this.reasonType = reasonType;
+    }
+    
+    public Supplier getSupplier() {
+        return supplier;
+    }
+    
+    public void setSupplier(Supplier supplier) {
+        this.supplier = supplier;
+    }
+    
+    public Warehouse getWarehouse() {
+        return warehouse;
+    }
+    
+    public void setWarehouse(Warehouse warehouse) {
+        this.warehouse = warehouse;
     }
     
     @Override

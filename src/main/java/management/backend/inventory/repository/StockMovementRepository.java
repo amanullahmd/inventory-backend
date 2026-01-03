@@ -102,6 +102,9 @@ public interface StockMovementRepository extends JpaRepository<StockMovement, Lo
         """)
     List<StockMovement> findRecentMovements();
     
+    List<StockMovement> findByReferenceNumber(String referenceNumber);
+    void deleteByReferenceNumber(String referenceNumber);
+    
     /**
      * Find stock movements within a date range.
      */

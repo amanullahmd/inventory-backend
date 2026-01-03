@@ -8,7 +8,8 @@ import java.util.Objects;
 @Entity
 @Table(name = "categories", indexes = {
     @Index(name = "idx_categories_name", columnList = "name"),
-    @Index(name = "idx_categories_is_active", columnList = "is_active")
+    @Index(name = "idx_categories_is_active", columnList = "is_active"),
+    @Index(name = "idx_categories_code", columnList = "category_code")
 })
 public class Category {
     
@@ -29,6 +30,9 @@ public class Category {
     
     @Column(name = "icon", length = 50)
     private String icon;
+    
+    @Column(name = "category_code", length = 100)
+    private String categoryCode;
     
     @Column(name = "is_active", nullable = false)
     private Boolean isActive = true;
@@ -100,6 +104,14 @@ public class Category {
     
     public void setIcon(String icon) {
         this.icon = icon;
+    }
+    
+    public String getCategoryCode() {
+        return categoryCode;
+    }
+    
+    public void setCategoryCode(String categoryCode) {
+        this.categoryCode = categoryCode;
     }
     
     public Boolean getIsActive() {

@@ -44,18 +44,25 @@ public class ItemService {
         if (itemRepository.existsBySku(request.getSku())) {
             throw new IllegalArgumentException("Item with SKU '" + request.getSku() + "' already exists");
         }
-        
+        if (request.getCategoryId() == null) {
+            throw new IllegalArgumentException("Category is required");
+        }
+        Category category = categoryRepository.findById(request.getCategoryId())
+            .orElseThrow(() -> new IllegalArgumentException("Category not found: " + request.getCategoryId()));
+
         // Create and save the item
-        Item item = new Item(request.getName(), request.getSku(), request.getUnitPrice());
-        
+        Item item = new Item();
+        item.setName(request.getName());
+        item.setSku(request.getSku());
+        item.setUnitPrice(request.getUnitPrice());
+        item.setCategory(category);
+        item.setCurrentStock(0L);
+        item.setMinimumStock(request.getMinimumStock() != null ? request.getMinimumStock() : 0L);
+        item.setIsActive(true);
+
         // Set optional description
         if (request.getDescription() != null && !request.getDescription().isBlank()) {
             item.setDescription(request.getDescription());
-        }
-        
-        // Set optional stock levels
-        if (request.getMinimumStock() != null) {
-            item.setMinimumStock(request.getMinimumStock());
         }
         
         if (request.getMaximumStock() != null) {
@@ -66,13 +73,7 @@ public class ItemService {
             item.setReorderLevel(request.getReorderLevel());
         }
         
-        // Set category if provided
-        if (request.getCategoryId() != null) {
-            Optional<Category> category = categoryRepository.findById(request.getCategoryId());
-            if (category.isPresent()) {
-                item.setCategory(category.get());
-            }
-        }
+        // Category is mandatory above
         
         return itemRepository.save(item);
     }
@@ -288,7 +289,10 @@ public class ItemService {
         
         // Calculate total inventory value (sum of unit_price × current_stock)
         BigDecimal totalValue = allItems.stream()
-            .map(item -> item.getUnitPrice().multiply(new BigDecimal(item.getCurrentStock())))
+            .map(item -> {
+                BigDecimal price = item.getUnitPrice() != null ? item.getUnitPrice() : BigDecimal.ZERO;
+                return price.multiply(new BigDecimal(item.getCurrentStock()));
+            })
             .reduce(BigDecimal.ZERO, BigDecimal::add);
         
         // Calculate low stock items count (1-9 units)
