@@ -75,12 +75,18 @@ public class StockMovement {
     @JoinColumn(name = "warehouse_id")
     private Warehouse warehouse;
     
+    @Enumerated(EnumType.STRING)
+    @Column(name = "source_mode", length = 50)
+    private StockSourceMode sourceMode;
+    
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
     
     @PrePersist
     protected void onCreate() {
-        createdAt = LocalDateTime.now();
+        if (createdAt == null) {
+            createdAt = LocalDateTime.now();
+        }
     }
     
     // Default constructor for JPA
@@ -217,6 +223,9 @@ public class StockMovement {
     public void setWarehouse(Warehouse warehouse) {
         this.warehouse = warehouse;
     }
+    
+    public StockSourceMode getSourceMode() { return sourceMode; }
+    public void setSourceMode(StockSourceMode sourceMode) { this.sourceMode = sourceMode; }
     
     @Override
     public boolean equals(Object o) {

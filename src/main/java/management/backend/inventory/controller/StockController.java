@@ -111,7 +111,8 @@ public class StockController {
     ) {
         try {
             stockService.updateStockIn(referenceNumber, request, authentication);
-            return ResponseEntity.ok(java.util.Map.of("referenceNumber", referenceNumber));
+            String newRef = (request.getReferenceNumber() != null && !request.getReferenceNumber().isBlank()) ? request.getReferenceNumber() : referenceNumber;
+            return ResponseEntity.ok(java.util.Map.of("referenceNumber", newRef));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(java.util.Map.of("message", e.getMessage()));
         }

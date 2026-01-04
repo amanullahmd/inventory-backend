@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Objects;
 
 @Entity
+@org.hibernate.annotations.DynamicUpdate
 @Table(name = "purchase_orders", indexes = {
     @Index(name = "idx_purchase_orders_supplier", columnList = "supplier_id"),
     @Index(name = "idx_purchase_orders_warehouse", columnList = "warehouse_id"),
@@ -32,8 +33,9 @@ public class PurchaseOrder {
     @JoinColumn(name = "warehouse_id", nullable = false)
     private Warehouse warehouse;
     
+    @Enumerated(EnumType.STRING)
     @Column(name = "status", length = 50)
-    private String status = "DRAFT";
+    private PurchaseOrderStatus status = PurchaseOrderStatus.DRAFT;
     
     @NotNull(message = "Order date is required")
     @Column(name = "order_date", nullable = false)
@@ -62,6 +64,9 @@ public class PurchaseOrder {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
     
+    @Column(name = "purchase_order_code", length = 50, unique = true, nullable = false)
+    private String purchaseOrderCode;
+    
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
@@ -80,7 +85,7 @@ public class PurchaseOrder {
         this.warehouse = warehouse;
         this.orderDate = orderDate;
         this.createdBy = createdBy;
-        this.status = "DRAFT";
+        this.status = PurchaseOrderStatus.DRAFT;
     }
     
     // Getters and Setters
@@ -108,11 +113,11 @@ public class PurchaseOrder {
         this.warehouse = warehouse;
     }
     
-    public String getStatus() {
+    public PurchaseOrderStatus getStatus() {
         return status;
     }
     
-    public void setStatus(String status) {
+    public void setStatus(PurchaseOrderStatus status) {
         this.status = status;
     }
     
@@ -175,6 +180,9 @@ public class PurchaseOrder {
     public LocalDateTime getUpdatedAt() {
         return updatedAt;
     }
+    
+    public String getPurchaseOrderCode() { return purchaseOrderCode; }
+    public void setPurchaseOrderCode(String purchaseOrderCode) { this.purchaseOrderCode = purchaseOrderCode; }
     
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;

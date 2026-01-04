@@ -8,6 +8,7 @@ import management.backend.inventory.entity.Item;
 import management.backend.inventory.entity.MovementType;
 import management.backend.inventory.entity.StockMovement;
 import management.backend.inventory.entity.StockOutReasonEnum;
+import management.backend.inventory.entity.StockSourceMode;
 import management.backend.inventory.entity.User;
 import management.backend.inventory.entity.Supplier;
 import management.backend.inventory.entity.Warehouse;
@@ -93,18 +94,25 @@ public class StockService {
         if (request.getItems() == null || request.getItems().isEmpty()) {
             throw new IllegalArgumentException("At least one item is required");
         }
-        Supplier supplier = supplierRepository.findById(request.getSupplierId())
-            .orElseThrow(() -> new IllegalArgumentException("Supplier not found"));
+        Supplier supplier = null;
+        if (request.getSupplierId() != null) {
+            supplier = supplierRepository.findById(request.getSupplierId())
+                .orElseThrow(() -> new IllegalArgumentException("Supplier not found"));
+            if (Boolean.FALSE.equals(supplier.getIsActive())) {
+                throw new IllegalArgumentException("Supplier is inactive");
+            }
+        }
         Warehouse warehouse = warehouseRepository.findById(request.getWarehouseId())
             .orElseThrow(() -> new IllegalArgumentException("Warehouse not found"));
-        if (Boolean.FALSE.equals(supplier.getIsActive()) || Boolean.FALSE.equals(warehouse.getIsActive())) {
-            throw new IllegalArgumentException("Supplier or warehouse is inactive");
+        if (Boolean.FALSE.equals(warehouse.getIsActive())) {
+            throw new IllegalArgumentException("Warehouse is inactive");
         }
         User currentUser = resolveCurrentUser(authentication);
         String ref = request.getReferenceNumber() != null && !request.getReferenceNumber().isBlank()
             ? request.getReferenceNumber()
             : generateReferenceNumber();
         
+        final Supplier supplierFinal = supplier;
         return request.getItems().stream().map(line -> {
             Item item = itemRepository.findById(line.getItemId())
                 .orElseThrow(() -> new IllegalArgumentException("Item not found: " + line.getItemId()));
@@ -115,8 +123,9 @@ public class StockService {
             );
             movement.setReferenceNumber(ref);
             movement.setNotes(request.getNotes());
-            movement.setSupplier(supplier);
+            if (supplierFinal != null) movement.setSupplier(supplierFinal);
             movement.setWarehouse(warehouse);
+            movement.setSourceMode(supplierFinal != null ? StockSourceMode.SUPPLIER : StockSourceMode.NON_SUPPLIER);
             item.setCurrentStock(newStock);
             itemRepository.save(item);
             return stockMovementRepository.save(movement);
@@ -127,15 +136,17 @@ public class StockService {
     public List<java.util.Map<String, Object>> getStockInDetails(String referenceNumber) {
         List<StockMovement> movements = stockMovementRepository.findByReferenceNumber(referenceNumber);
         return movements.stream()
-            .map(m -> java.util.Map.<String, Object>of(
-                "itemId", m.getItem().getItemId(),
-                "sku", m.getItem().getSku(),
-                "name", m.getItem().getName(),
-                "quantity", m.getQuantity(),
-                "createdAt", m.getCreatedAt(),
-                "supplierId", m.getSupplier() != null ? m.getSupplier().getSupplierId() : null,
-                "warehouseId", m.getWarehouse() != null ? m.getWarehouse().getWarehouseId() : null
-            ))
+            .map(m -> {
+                java.util.Map<String, Object> row = new java.util.HashMap<>();
+                row.put("itemId", m.getItem().getItemId());
+                row.put("sku", m.getItem().getSku());
+                row.put("name", m.getItem().getName());
+                row.put("quantity", m.getQuantity());
+                row.put("createdAt", m.getCreatedAt());
+                row.put("supplierId", m.getSupplier() != null ? m.getSupplier().getSupplierId() : null);
+                row.put("warehouseId", m.getWarehouse() != null ? m.getWarehouse().getWarehouseId() : null);
+                return row;
+            })
             .collect(Collectors.toList());
     }
     
@@ -143,11 +154,6 @@ public class StockService {
     public void deleteStockIn(String referenceNumber) {
         List<StockMovement> movements = stockMovementRepository.findByReferenceNumber(referenceNumber);
         if (movements.isEmpty()) return;
-        java.time.LocalDate today = java.time.LocalDate.now();
-        boolean sameDay = movements.stream().allMatch(m -> m.getCreatedAt().toLocalDate().equals(today));
-        if (!sameDay) {
-            throw new IllegalArgumentException("Cannot modify past stock-in batches");
-        }
         for (StockMovement m : movements) {
             Item item = m.getItem();
             item.setCurrentStock(item.getCurrentStock() - m.getQuantity());
@@ -158,28 +164,39 @@ public class StockService {
     
     @Transactional
     public void updateStockIn(String referenceNumber, StockInBatchRequest request, Authentication authentication) {
+        List<StockMovement> existing = stockMovementRepository.findByReferenceNumber(referenceNumber);
+        java.time.LocalDateTime originalCreated = existing.isEmpty() ? null : existing.stream().map(StockMovement::getCreatedAt).min(java.util.Comparator.naturalOrder()).orElse(null);
         deleteStockIn(referenceNumber);
         // Recreate with the same reference number
-        Supplier supplier = supplierRepository.findById(request.getSupplierId())
-            .orElseThrow(() -> new IllegalArgumentException("Supplier not found"));
+        Supplier supplier = null;
+        if (request.getSupplierId() != null) {
+            supplier = supplierRepository.findById(request.getSupplierId())
+                .orElseThrow(() -> new IllegalArgumentException("Supplier not found"));
+            if (Boolean.FALSE.equals(supplier.getIsActive())) {
+                throw new IllegalArgumentException("Supplier is inactive");
+            }
+        }
         Warehouse warehouse = warehouseRepository.findById(request.getWarehouseId())
             .orElseThrow(() -> new IllegalArgumentException("Warehouse not found"));
-        if (Boolean.FALSE.equals(supplier.getIsActive()) || Boolean.FALSE.equals(warehouse.getIsActive())) {
-            throw new IllegalArgumentException("Supplier or warehouse is inactive");
+        if (Boolean.FALSE.equals(warehouse.getIsActive())) {
+            throw new IllegalArgumentException("Warehouse is inactive");
         }
         User currentUser = resolveCurrentUser(authentication);
         List<StockInLine> lines = request.getItems();
         if (lines == null || lines.isEmpty()) throw new IllegalArgumentException("No items provided");
+        String newRef = (request.getReferenceNumber() != null && !request.getReferenceNumber().isBlank()) ? request.getReferenceNumber() : referenceNumber;
         for (StockInLine line : lines) {
             Item item = itemRepository.findById(line.getItemId())
                 .orElseThrow(() -> new IllegalArgumentException("Item not found: " + line.getItemId()));
             Long previousStock = item.getCurrentStock();
             Long newStock = previousStock + line.getQuantity();
             StockMovement movement = new StockMovement(item, currentUser, MovementType.IN, line.getQuantity(), previousStock, newStock);
-            movement.setReferenceNumber(referenceNumber);
+            movement.setReferenceNumber(newRef);
             movement.setNotes(request.getNotes());
-            movement.setSupplier(supplier);
+            if (supplier != null) movement.setSupplier(supplier);
             movement.setWarehouse(warehouse);
+            if (originalCreated != null) movement.setCreatedAt(originalCreated);
+            movement.setSourceMode(supplier != null ? StockSourceMode.SUPPLIER : StockSourceMode.NON_SUPPLIER);
             item.setCurrentStock(newStock);
             itemRepository.save(item);
             stockMovementRepository.save(movement);
@@ -261,6 +278,7 @@ public class StockService {
         movement.setReason(request.getReason());
         movement.setRecipient(request.getRecipient());
         movement.setReasonType(reasonType);
+        movement.setSourceMode(StockSourceMode.NON_SUPPLIER);
         
         // Update item stock
         item.setCurrentStock(newStock);
@@ -411,15 +429,21 @@ public class StockService {
             java.util.List<StockMovement> rows = entry.getValue();
             StockMovement first = rows.get(0);
             String createdBy = first.getUser() != null ? first.getUser().getName() : null;
-            java.time.LocalDateTime createdAt = first.getCreatedAt();
-            summaries.add(java.util.Map.of(
-                "referenceNumber", ref,
-                "count", rows.size(),
-                "createdBy", createdBy,
-                "createdAt", createdAt
-            ));
+            java.time.LocalDateTime createdAt = rows.stream().map(StockMovement::getCreatedAt).min(java.util.Comparator.naturalOrder()).orElse(first.getCreatedAt());
+            java.time.LocalDateTime updatedAt = rows.stream().map(StockMovement::getCreatedAt).max(java.util.Comparator.naturalOrder()).orElse(first.getCreatedAt());
+            String supplierName = first.getSupplier() != null ? first.getSupplier().getName() : null;
+            String sourceMode = first.getSourceMode() != null ? first.getSourceMode().name() : null;
+            java.util.Map<String, Object> row = new java.util.HashMap<>();
+            row.put("referenceNumber", ref);
+            row.put("count", rows.size());
+            row.put("createdBy", createdBy);
+            row.put("createdAt", createdAt);
+            row.put("updatedAt", updatedAt);
+            row.put("supplierName", supplierName);
+            row.put("sourceMode", sourceMode);
+            summaries.add(row);
         }
-        summaries.sort((a,b) -> ((java.time.LocalDateTime)b.get("createdAt")).compareTo((java.time.LocalDateTime)a.get("createdAt")));
+        summaries.sort((a,b) -> ((java.time.LocalDateTime)b.get("updatedAt")).compareTo((java.time.LocalDateTime)a.get("updatedAt")));
         return summaries;
     }
 

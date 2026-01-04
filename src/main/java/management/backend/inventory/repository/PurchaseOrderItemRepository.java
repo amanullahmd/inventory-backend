@@ -3,11 +3,9 @@ package management.backend.inventory.repository;
 import management.backend.inventory.entity.PurchaseOrderItem;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
-
 import java.util.List;
 
 @Repository
 public interface PurchaseOrderItemRepository extends JpaRepository<PurchaseOrderItem, Long> {
-    List<PurchaseOrderItem> findByPurchaseOrderPurchaseOrderId(Long purchaseOrderId);
-    List<PurchaseOrderItem> findByItemItemId(Long itemId);
+    List<PurchaseOrderItem> findByPurchaseOrder_PurchaseOrderId(Long purchaseOrderId);
 }
