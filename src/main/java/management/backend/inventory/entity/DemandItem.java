@@ -27,18 +27,14 @@ public class DemandItem {
     
     @NotNull
     @Min(1)
-    @Column(name = "quantity", nullable = false)
-    private Integer quantity = 1;
-    
-    @Column(name = "unit", length = 50)
-    private String unit;
+    @Column(name = "units", nullable = false)
+    private Integer units = 1;
     
     public DemandItem() {}
-    public DemandItem(Demand demand, Item item, Integer quantity, String unit) {
+    public DemandItem(Demand demand, Item item, Integer units) {
         this.demand = demand;
         this.item = item;
-        this.quantity = quantity != null ? quantity : 1;
-        this.unit = unit;
+        this.units = units != null ? units : 1;
     }
     
     public Long getDemandItemId() { return demandItemId; }
@@ -46,8 +42,6 @@ public class DemandItem {
     public void setDemand(Demand demand) { this.demand = demand; }
     public Item getItem() { return item; }
     public void setItem(Item item) { this.item = item; }
-    public Integer getQuantity() { return quantity; }
-    public void setQuantity(Integer quantity) { this.quantity = quantity; }
-    public String getUnit() { return unit; }
-    public void setUnit(String unit) { this.unit = unit; }
+    public Integer getUnits() { return units; }
+    public void setUnits(Integer units) { this.units = units; }
 }

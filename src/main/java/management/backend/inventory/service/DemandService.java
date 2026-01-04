@@ -6,12 +6,14 @@ import management.backend.inventory.entity.Demand;
 import management.backend.inventory.entity.DemandItem;
 import management.backend.inventory.entity.Item;
 import management.backend.inventory.entity.User;
+import management.backend.inventory.entity.Employee;
 import management.backend.inventory.entity.Warehouse;
 import management.backend.inventory.entity.DemandStatus;
 import management.backend.inventory.repository.DemandRepository;
 import management.backend.inventory.repository.ItemRepository;
 import management.backend.inventory.repository.DemandItemRepository;
 import management.backend.inventory.repository.UserRepository;
+import management.backend.inventory.repository.EmployeeRepository;
 import management.backend.inventory.repository.WarehouseRepository;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
@@ -24,29 +26,44 @@ public class DemandService {
     private final DemandRepository demandRepository;
     private final ItemRepository itemRepository;
     private final DemandItemRepository demandItemRepository;
+    private final EmployeeRepository employeeRepository;
     private final WarehouseRepository warehouseRepository;
     private final UserRepository userRepository;
     
-    public DemandService(DemandRepository demandRepository, ItemRepository itemRepository, WarehouseRepository warehouseRepository, UserRepository userRepository, DemandItemRepository demandItemRepository) {
+    public DemandService(DemandRepository demandRepository, ItemRepository itemRepository, WarehouseRepository warehouseRepository, UserRepository userRepository, DemandItemRepository demandItemRepository, EmployeeRepository employeeRepository) {
         this.demandRepository = demandRepository;
         this.itemRepository = itemRepository;
         this.warehouseRepository = warehouseRepository;
         this.userRepository = userRepository;
         this.demandItemRepository = demandItemRepository;
+        this.employeeRepository = employeeRepository;
     }
     
     @Transactional
     public DemandResponse create(CreateDemandRequest request, Authentication authentication) {
-        Item item = itemRepository.findById(request.getItemId()).orElseThrow(() -> new IllegalArgumentException("Item not found"));
+        Item item = null;
+        if (request.getItems() != null && !request.getItems().isEmpty()) {
+            Long firstItemId = request.getItems().get(0).getItemId();
+            item = itemRepository.findById(firstItemId).orElseThrow(() -> new IllegalArgumentException("Item not found: " + firstItemId));
+        } else if (request.getItemId() != null) {
+            item = itemRepository.findById(request.getItemId()).orElseThrow(() -> new IllegalArgumentException("Item not found"));
+        } else {
+            throw new IllegalArgumentException("At least one item is required");
+        }
+        Employee emp = null;
         Warehouse warehouse = null;
-        if (request.getWarehouseId() != null) {
-            warehouse = warehouseRepository.findById(request.getWarehouseId()).orElseThrow(() -> new IllegalArgumentException("Warehouse not found"));
+        if (request.getEmployeeId() != null) {
+            emp = employeeRepository.findById(request.getEmployeeId()).orElseThrow(() -> new IllegalArgumentException("Employee not found"));
+            warehouse = emp.getBranch();
         }
         User user = resolveCurrentUser(authentication);
         Demand d = new Demand();
-        d.setDemanderName(request.getDemanderName());
-        d.setPosition(request.getPosition());
-        d.setGrade(request.getGrade());
+        if (emp != null) {
+            d.setEmployee(emp);
+            d.setDemanderName(emp.getName());
+            d.setPosition(emp.getPosition());
+            d.setGrade(emp.getGrade());
+        }
         d.setItem(item);
         d.setUnit(request.getUnit());
         d.setWarehouse(warehouse);
@@ -67,17 +84,16 @@ public class DemandService {
         if (request.getItems() != null && !request.getItems().isEmpty()) {
             for (var line : request.getItems()) {
                 Item it = itemRepository.findById(line.getItemId()).orElseThrow(() -> new IllegalArgumentException("Item not found: " + line.getItemId()));
-                DemandItem di = new DemandItem(d, it, line.getQuantity() != null ? line.getQuantity() : 1, line.getUnit());
+                DemandItem di = new DemandItem(d, it, line.getUnits() != null ? line.getUnits() : 1);
                 demandItemRepository.save(di);
             }
             // set primary item for backward compatibility display
             var first = request.getItems().get(0);
             Item it = itemRepository.findById(first.getItemId()).orElseThrow(() -> new IllegalArgumentException("Item not found: " + first.getItemId()));
             d.setItem(it);
-            d.setUnit(first.getUnit());
             d = demandRepository.save(d);
         } else {
-            DemandItem di = new DemandItem(d, item, 1, request.getUnit());
+            DemandItem di = new DemandItem(d, item, 1);
             demandItemRepository.save(di);
         }
         return toResponse(d);
@@ -100,18 +116,19 @@ public class DemandService {
         if (request.getDemandCode() != null && !request.getDemandCode().isBlank()) {
             d.setDemandCode(request.getDemandCode());
         }
-        if (request.getDemanderName() != null) d.setDemanderName(request.getDemanderName());
-        if (request.getPosition() != null) d.setPosition(request.getPosition());
-        if (request.getGrade() != null) d.setGrade(request.getGrade());
+        if (request.getEmployeeId() != null) {
+            Employee emp = employeeRepository.findById(request.getEmployeeId()).orElseThrow(() -> new IllegalArgumentException("Employee not found"));
+            d.setEmployee(emp);
+            d.setDemanderName(emp.getName());
+            d.setPosition(emp.getPosition());
+            d.setGrade(emp.getGrade());
+            d.setWarehouse(emp.getBranch());
+        }
         if (request.getItemId() != null) {
             Item item = itemRepository.findById(request.getItemId()).orElseThrow(() -> new IllegalArgumentException("Item not found"));
             d.setItem(item);
         }
         if (request.getUnit() != null) d.setUnit(request.getUnit());
-        if (request.getWarehouseId() != null) {
-            Warehouse w = warehouseRepository.findById(request.getWarehouseId()).orElseThrow(() -> new IllegalArgumentException("Warehouse not found"));
-            d.setWarehouse(w);
-        }
         if (request.getStatus() != null && !request.getStatus().isBlank()) {
             try {
                 DemandStatus st = DemandStatus.valueOf(request.getStatus().toUpperCase());
@@ -130,13 +147,12 @@ public class DemandService {
             if (!request.getItems().isEmpty()) {
                 for (var line : request.getItems()) {
                     Item it = itemRepository.findById(line.getItemId()).orElseThrow(() -> new IllegalArgumentException("Item not found: " + line.getItemId()));
-                    DemandItem di = new DemandItem(d, it, line.getQuantity() != null ? line.getQuantity() : 1, line.getUnit());
+                    DemandItem di = new DemandItem(d, it, line.getUnits() != null ? line.getUnits() : 1);
                     demandItemRepository.save(di);
                 }
                 var first = request.getItems().get(0);
                 Item it = itemRepository.findById(first.getItemId()).orElseThrow(() -> new IllegalArgumentException("Item not found: " + first.getItemId()));
                 d.setItem(it);
-                d.setUnit(first.getUnit());
                 d = demandRepository.save(d);
             }
         }
@@ -159,8 +175,7 @@ public class DemandService {
                     di.getItem().getItemId(),
                     di.getItem().getSku(),
                     di.getItem().getName(),
-                    di.getQuantity(),
-                    di.getUnit()
+                    di.getUnits()
                 ))
                 .toList();
         if (itemDtos.isEmpty() && d.getItem() != null) {
@@ -169,13 +184,16 @@ public class DemandService {
                 d.getItem().getItemId(),
                 d.getItem().getSku(),
                 d.getItem().getName(),
-                1,
-                d.getUnit()
+                1
             ));
         }
+        Long eid = d.getEmployee() != null ? d.getEmployee().getEmployeeId() : null;
+        String ecode = d.getEmployee() != null ? d.getEmployee().getEmployeeCode() : null;
         return new DemandResponse(
             d.getDemandId(),
             d.getDemandCode(),
+            eid,
+            ecode,
             d.getDemanderName(),
             d.getPosition(),
             d.getGrade(),

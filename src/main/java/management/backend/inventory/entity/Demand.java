@@ -44,6 +44,10 @@ public class Demand {
     @JoinColumn(name = "warehouse_id")
     private Warehouse warehouse;
     
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "employee_id")
+    private Employee employee;
+    
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "requested_by", nullable = false)
@@ -84,6 +88,8 @@ public class Demand {
     public void setUnit(String unit) { this.unit = unit; }
     public Warehouse getWarehouse() { return warehouse; }
     public void setWarehouse(Warehouse warehouse) { this.warehouse = warehouse; }
+    public Employee getEmployee() { return employee; }
+    public void setEmployee(Employee employee) { this.employee = employee; }
     public User getRequestedBy() { return requestedBy; }
     public void setRequestedBy(User requestedBy) { this.requestedBy = requestedBy; }
     public LocalDateTime getCreatedAt() { return createdAt; }

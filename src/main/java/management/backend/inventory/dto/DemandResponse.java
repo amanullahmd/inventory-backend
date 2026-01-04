@@ -5,6 +5,8 @@ import java.time.LocalDateTime;
 public class DemandResponse {
     private Long demandId;
     private String demandCode;
+    private Long employeeId;
+    private String employeeCode;
     private String demanderName;
     private String position;
     private String grade;
@@ -21,12 +23,14 @@ public class DemandResponse {
     private LocalDateTime updatedAt;
     private java.util.List<DemandItemResponse> items;
     
-    public DemandResponse(Long demandId, String demandCode, String demanderName, String position, String grade, String status,
+    public DemandResponse(Long demandId, String demandCode, Long employeeId, String employeeCode, String demanderName, String position, String grade, String status,
                           Long itemId, String itemName, String sku, String unit,
                           Long warehouseId, String warehouseName, String requestedByName, LocalDateTime createdAt, LocalDateTime updatedAt, String note,
                           java.util.List<DemandItemResponse> items) {
         this.demandId = demandId;
         this.demandCode = demandCode;
+        this.employeeId = employeeId;
+        this.employeeCode = employeeCode;
         this.demanderName = demanderName;
         this.position = position;
         this.grade = grade;
@@ -47,6 +51,8 @@ public class DemandResponse {
     public Long getDemandId() { return demandId; }
     public String getDemandCode() { return demandCode; }
     public String getDemanderName() { return demanderName; }
+    public Long getEmployeeId() { return employeeId; }
+    public String getEmployeeCode() { return employeeCode; }
     public String getPosition() { return position; }
     public String getGrade() { return grade; }
     public String getStatus() { return status; }

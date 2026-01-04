@@ -5,20 +5,17 @@ public class DemandItemResponse {
     private Long itemId;
     private String sku;
     private String name;
-    private Integer quantity;
-    private String unit;
-    public DemandItemResponse(Long demandItemId, Long itemId, String sku, String name, Integer quantity, String unit) {
+    private Integer units;
+    public DemandItemResponse(Long demandItemId, Long itemId, String sku, String name, Integer units) {
         this.demandItemId = demandItemId;
         this.itemId = itemId;
         this.sku = sku;
         this.name = name;
-        this.quantity = quantity;
-        this.unit = unit;
+        this.units = units;
     }
     public Long getDemandItemId() { return demandItemId; }
     public Long getItemId() { return itemId; }
     public String getSku() { return sku; }
     public String getName() { return name; }
-    public Integer getQuantity() { return quantity; }
-    public String getUnit() { return unit; }
+    public Integer getUnits() { return units; }
 }
