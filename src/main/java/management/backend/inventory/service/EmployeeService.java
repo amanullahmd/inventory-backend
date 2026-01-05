@@ -33,13 +33,16 @@ public class EmployeeService {
         e.setServicePeriod(req.getServicePeriod());
         e.setNidNumber(req.getNidNumber());
         if (req.getBranchId() != null) {
-            Warehouse w = warehouseRepository.findById(req.getBranchId()).orElseThrow(() -> new IllegalArgumentException("Branch not found"));
+            Long branchId = req.getBranchId();
+            if (branchId == null) throw new IllegalArgumentException("Branch ID cannot be null");
+            Warehouse w = warehouseRepository.findById(branchId).orElseThrow(() -> new IllegalArgumentException("Branch not found"));
             e.setBranch(w);
         }
-        String code = generateCode(req.getName());
+        String code = req.getEmployeeCode() != null && !req.getEmployeeCode().isBlank() ? req.getEmployeeCode() : generateCode(req.getName());
         e.setEmployeeCode(code);
-        e = employeeRepository.save(e);
-        return toResponse(e);
+        var saved = employeeRepository.save(e);
+        if (saved == null) throw new RuntimeException("Saved employee is null");
+        return toResponse(saved);
     }
     
     @Transactional(readOnly = true)
@@ -49,19 +52,23 @@ public class EmployeeService {
     
     @Transactional(readOnly = true)
     public EmployeeResponse get(Long id) {
+        if (id == null) throw new IllegalArgumentException("ID cannot be null");
         Employee e = employeeRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Employee not found"));
         return toResponse(e);
     }
     
     @Transactional
     public EmployeeResponse update(Long id, UpdateEmployeeRequest req) {
+        if (id == null) throw new IllegalArgumentException("ID cannot be null");
         Employee e = employeeRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Employee not found"));
         if (req.getEmployeeCode() != null && !req.getEmployeeCode().isBlank()) e.setEmployeeCode(req.getEmployeeCode());
         if (req.getName() != null) e.setName(req.getName());
         if (req.getGrade() != null) e.setGrade(req.getGrade());
         if (req.getPosition() != null) e.setPosition(req.getPosition());
         if (req.getBranchId() != null) {
-            Warehouse w = warehouseRepository.findById(req.getBranchId()).orElseThrow(() -> new IllegalArgumentException("Branch not found"));
+            Long branchId = req.getBranchId();
+            if (branchId == null) throw new IllegalArgumentException("Branch ID cannot be null");
+            Warehouse w = warehouseRepository.findById(branchId).orElseThrow(() -> new IllegalArgumentException("Branch not found"));
             e.setBranch(w);
         }
         if (req.getMobileNumber() != null) e.setMobileNumber(req.getMobileNumber());
@@ -69,12 +76,14 @@ public class EmployeeService {
         if (req.getAddress() != null) e.setAddress(req.getAddress());
         if (req.getServicePeriod() != null) e.setServicePeriod(req.getServicePeriod());
         if (req.getNidNumber() != null) e.setNidNumber(req.getNidNumber());
-        e = employeeRepository.save(e);
-        return toResponse(e);
+        var saved = employeeRepository.save(e);
+        if (saved == null) throw new RuntimeException("Saved employee is null");
+        return toResponse(saved);
     }
     
     @Transactional
     public void delete(Long id) {
+        if (id == null) throw new IllegalArgumentException("ID cannot be null");
         Employee e = employeeRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Employee not found"));
         employeeRepository.delete(e);
     }

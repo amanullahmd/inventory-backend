@@ -55,9 +55,11 @@ public class StockService {
      */
     public StockMovement recordStockIn(StockMovementRequest request, Authentication authentication) {
         // Validate that the item exists
-        Optional<Item> itemOpt = itemRepository.findById(request.getItemId());
+        Long itemId = request.getItemId();
+        if (itemId == null) throw new IllegalArgumentException("Item ID cannot be null");
+        Optional<Item> itemOpt = itemRepository.findById(itemId);
         if (itemOpt.isEmpty()) {
-            throw new IllegalArgumentException("Item with ID " + request.getItemId() + " not found");
+            throw new IllegalArgumentException("Item with ID " + itemId + " not found");
         }
         
         Item item = itemOpt.get();
@@ -96,13 +98,17 @@ public class StockService {
         }
         Supplier supplier = null;
         if (request.getSupplierId() != null) {
-            supplier = supplierRepository.findById(request.getSupplierId())
+            Long supplierId = request.getSupplierId();
+            if (supplierId == null) throw new IllegalArgumentException("Supplier ID cannot be null");
+            supplier = supplierRepository.findById(supplierId)
                 .orElseThrow(() -> new IllegalArgumentException("Supplier not found"));
             if (Boolean.FALSE.equals(supplier.getIsActive())) {
                 throw new IllegalArgumentException("Supplier is inactive");
             }
         }
-        Warehouse warehouse = warehouseRepository.findById(request.getWarehouseId())
+        Long warehouseId = request.getWarehouseId();
+        if (warehouseId == null) throw new IllegalArgumentException("Warehouse ID cannot be null");
+        Warehouse warehouse = warehouseRepository.findById(warehouseId)
             .orElseThrow(() -> new IllegalArgumentException("Warehouse not found"));
         if (Boolean.FALSE.equals(warehouse.getIsActive())) {
             throw new IllegalArgumentException("Warehouse is inactive");
@@ -114,8 +120,10 @@ public class StockService {
         
         final Supplier supplierFinal = supplier;
         return request.getItems().stream().map(line -> {
-            Item item = itemRepository.findById(line.getItemId())
-                .orElseThrow(() -> new IllegalArgumentException("Item not found: " + line.getItemId()));
+            Long itemId = line.getItemId();
+            if (itemId == null) throw new IllegalArgumentException("Item ID cannot be null");
+            Item item = itemRepository.findById(itemId)
+                .orElseThrow(() -> new IllegalArgumentException("Item not found: " + itemId));
             Long previousStock = item.getCurrentStock();
             Long newStock = previousStock + line.getQuantity();
             StockMovement movement = new StockMovement(
@@ -170,13 +178,17 @@ public class StockService {
         // Recreate with the same reference number
         Supplier supplier = null;
         if (request.getSupplierId() != null) {
-            supplier = supplierRepository.findById(request.getSupplierId())
+            Long supplierId = request.getSupplierId();
+            if (supplierId == null) throw new IllegalArgumentException("Supplier ID cannot be null");
+            supplier = supplierRepository.findById(supplierId)
                 .orElseThrow(() -> new IllegalArgumentException("Supplier not found"));
             if (Boolean.FALSE.equals(supplier.getIsActive())) {
                 throw new IllegalArgumentException("Supplier is inactive");
             }
         }
-        Warehouse warehouse = warehouseRepository.findById(request.getWarehouseId())
+        Long warehouseId = request.getWarehouseId();
+        if (warehouseId == null) throw new IllegalArgumentException("Warehouse ID cannot be null");
+        Warehouse warehouse = warehouseRepository.findById(warehouseId)
             .orElseThrow(() -> new IllegalArgumentException("Warehouse not found"));
         if (Boolean.FALSE.equals(warehouse.getIsActive())) {
             throw new IllegalArgumentException("Warehouse is inactive");
@@ -186,8 +198,10 @@ public class StockService {
         if (lines == null || lines.isEmpty()) throw new IllegalArgumentException("No items provided");
         String newRef = (request.getReferenceNumber() != null && !request.getReferenceNumber().isBlank()) ? request.getReferenceNumber() : referenceNumber;
         for (StockInLine line : lines) {
-            Item item = itemRepository.findById(line.getItemId())
-                .orElseThrow(() -> new IllegalArgumentException("Item not found: " + line.getItemId()));
+            Long itemId = line.getItemId();
+            if (itemId == null) throw new IllegalArgumentException("Item ID cannot be null");
+            Item item = itemRepository.findById(itemId)
+                .orElseThrow(() -> new IllegalArgumentException("Item not found: " + itemId));
             Long previousStock = item.getCurrentStock();
             Long newStock = previousStock + line.getQuantity();
             StockMovement movement = new StockMovement(item, currentUser, MovementType.IN, line.getQuantity(), previousStock, newStock);
@@ -227,9 +241,11 @@ public class StockService {
      */
     public StockMovement recordStockOut(StockMovementRequest request, Authentication authentication) {
         // Validate that the item exists
-        Optional<Item> itemOpt = itemRepository.findById(request.getItemId());
+        Long itemId = request.getItemId();
+        if (itemId == null) throw new IllegalArgumentException("Item ID cannot be null");
+        Optional<Item> itemOpt = itemRepository.findById(itemId);
         if (itemOpt.isEmpty()) {
-            throw new IllegalArgumentException("Item with ID " + request.getItemId() + " not found");
+            throw new IllegalArgumentException("Item with ID " + itemId + " not found");
         }
         
         Item item = itemOpt.get();
@@ -342,6 +358,9 @@ public class StockService {
      */
     @Transactional(readOnly = true)
     public Optional<ItemStockResponse> getStockSummaryForItem(Long itemId) {
+        if (itemId == null) {
+            return Optional.empty();
+        }
         Optional<Item> itemOpt = itemRepository.findById(itemId);
         if (itemOpt.isEmpty()) {
             return Optional.empty();
@@ -505,8 +524,9 @@ public class StockService {
         }
         
         // Validate that the item exists
-        if (!itemRepository.existsById(request.getItemId())) {
-            throw new IllegalArgumentException("Item with ID " + request.getItemId() + " not found");
+        Long itemId = request.getItemId();
+        if (itemId == null || !itemRepository.existsById(itemId)) {
+            throw new IllegalArgumentException("Item with ID " + itemId + " not found");
         }
     }
     

@@ -43,6 +43,7 @@ public class WarehouseService {
     
     @Transactional
     public Warehouse updateWarehouse(Long id, UpdateWarehouseRequest request) {
+        if (id == null) throw new IllegalArgumentException("ID cannot be null");
         Warehouse warehouse = warehouseRepository.findById(id)
             .orElseThrow(() -> new IllegalArgumentException("Warehouse not found"));
         warehouse.setName(request.getName());
@@ -65,6 +66,7 @@ public class WarehouseService {
     
     @Transactional
     public Warehouse setActive(Long id, Boolean active) {
+        if (id == null) throw new IllegalArgumentException("ID cannot be null");
         Warehouse warehouse = warehouseRepository.findById(id)
             .orElseThrow(() -> new IllegalArgumentException("Warehouse not found"));
         warehouse.setIsActive(active != null ? active : warehouse.getIsActive());

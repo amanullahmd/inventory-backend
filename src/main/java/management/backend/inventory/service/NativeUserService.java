@@ -35,6 +35,7 @@ public class NativeUserService {
     }
 
     public Optional<User> findById(Long id) {
+        if (id == null) return Optional.empty();
         return userRepository.findById(id);
     }
 
@@ -45,6 +46,9 @@ public class NativeUserService {
     }
 
     public User getUserWithRole(Long userId) {
+        if (userId == null) {
+            throw new IllegalArgumentException("User ID cannot be null");
+        }
         return userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
     }
@@ -64,6 +68,9 @@ public class NativeUserService {
 
     @Transactional
     public UserProfileResponse updateUserProfile(Long userId, UserProfileRequest request) {
+        if (userId == null) {
+            throw new IllegalArgumentException("User ID cannot be null");
+        }
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
@@ -90,6 +97,9 @@ public class NativeUserService {
     }
 
     public UserProfileResponse getUserProfile(Long userId) {
+        if (userId == null) {
+            throw new IllegalArgumentException("User ID cannot be null");
+        }
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
         return new UserProfileResponse(user);

@@ -94,6 +94,9 @@ public class AuthService {
         }
 
         Long userId = jwtTokenProvider.extractUserIdFromToken(request.getRefreshToken());
+        if (userId == null) {
+            throw new ValidationException("Invalid token: user ID is missing");
+        }
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ValidationException("User not found"));
 
@@ -113,6 +116,9 @@ public class AuthService {
 
     @Transactional
     public void changePassword(Long userId, ChangePasswordRequest request) {
+        if (userId == null) {
+            throw new IllegalArgumentException("User ID cannot be null");
+        }
         if (!request.getNewPassword().equals(request.getConfirmPassword())) {
             throw new ValidationException("New password and confirmation do not match");
         }
@@ -139,6 +145,9 @@ public class AuthService {
     }
 
     public boolean isPasswordChangeRequired(Long userId) {
+        if (userId == null) {
+            throw new IllegalArgumentException("User ID cannot be null");
+        }
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ValidationException("User not found"));
         return user.getPasswordChangeRequired() != null && user.getPasswordChangeRequired();

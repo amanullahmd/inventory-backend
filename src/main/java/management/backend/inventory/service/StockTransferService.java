@@ -44,11 +44,17 @@ public class StockTransferService {
 
     @Transactional
     public StockTransfer createTransfer(CreateTransferRequest request, Authentication authentication) {
-        Item item = itemRepository.findById(request.getItemId())
+        Long itemId = request.getItemId();
+        if (itemId == null) throw new IllegalArgumentException("Item ID is required");
+        Item item = itemRepository.findById(itemId)
             .orElseThrow(() -> new IllegalArgumentException("Item not found"));
-        Warehouse fromW = warehouseRepository.findById(request.getFromWarehouseId())
+        Long fromWarehouseId = request.getFromWarehouseId();
+        if (fromWarehouseId == null) throw new IllegalArgumentException("From warehouse ID is required");
+        Warehouse fromW = warehouseRepository.findById(fromWarehouseId)
             .orElseThrow(() -> new IllegalArgumentException("From warehouse not found"));
-        Warehouse toW = warehouseRepository.findById(request.getToWarehouseId())
+        Long toWarehouseId = request.getToWarehouseId();
+        if (toWarehouseId == null) throw new IllegalArgumentException("To warehouse ID is required");
+        Warehouse toW = warehouseRepository.findById(toWarehouseId)
             .orElseThrow(() -> new IllegalArgumentException("To warehouse not found"));
         if (fromW.getWarehouseId().equals(toW.getWarehouseId())) {
             throw new IllegalArgumentException("Source and destination warehouses must be different");
@@ -65,7 +71,9 @@ public class StockTransferService {
         transfer.setCreatedBy(currentUser);
         transfer.setStatus("DRAFT");
         if (request.getBatchId() != null) {
-            Batch batch = batchRepository.findById(request.getBatchId()).orElse(null);
+            Long batchId = request.getBatchId();
+            if (batchId == null) throw new IllegalArgumentException("Batch ID cannot be null");
+            Batch batch = batchRepository.findById(batchId).orElse(null);
             transfer.setBatch(batch);
         }
         return stockTransferRepository.save(transfer);

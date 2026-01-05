@@ -1,7 +1,5 @@
 package management.backend.inventory.dto;
 
-import jakarta.validation.constraints.NotNull;
-
 public class CreateDemandRequest {
     private Long employeeId;
     private Long itemId;

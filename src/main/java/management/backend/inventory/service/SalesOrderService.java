@@ -35,7 +35,9 @@ public class SalesOrderService {
 
     @Transactional
     public SalesOrder createSalesOrder(CreateSalesOrderRequest request, Authentication authentication) {
-        Warehouse warehouse = warehouseRepository.findById(request.getWarehouseId())
+        Long warehouseId = request.getWarehouseId();
+        if (warehouseId == null) throw new IllegalArgumentException("Warehouse ID is required");
+        Warehouse warehouse = warehouseRepository.findById(warehouseId)
             .orElseThrow(() -> new IllegalArgumentException("Warehouse not found"));
         User currentUser = userRepository.findByEmail(authentication.getName())
             .orElseThrow(() -> new IllegalArgumentException("User not found"));

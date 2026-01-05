@@ -65,6 +65,9 @@ public class CategoryService {
      */
     @Transactional(readOnly = true)
     public Optional<CategoryResponse> getCategoryById(Long categoryId) {
+        if (categoryId == null) {
+            return Optional.empty();
+        }
         return categoryRepository.findById(categoryId)
             .map(this::convertToResponse);
     }
@@ -81,6 +84,9 @@ public class CategoryService {
      * Update a category.
      */
     public CategoryResponse updateCategory(Long categoryId, String name, String description, String color, String code) {
+        if (categoryId == null) {
+             throw new IllegalArgumentException("Category ID cannot be null");
+        }
         Category category = categoryRepository.findById(categoryId)
             .orElseThrow(() -> new IllegalArgumentException("Category not found with ID: " + categoryId));
         
@@ -109,6 +115,9 @@ public class CategoryService {
      * Delete a category.
      */
     public void deleteCategory(Long categoryId) {
+        if (categoryId == null) {
+            throw new IllegalArgumentException("Category ID cannot be null");
+        }
         if (!categoryRepository.existsById(categoryId)) {
             throw new IllegalArgumentException("Category not found with ID: " + categoryId);
         }
@@ -120,6 +129,9 @@ public class CategoryService {
      */
     @Transactional(readOnly = true)
     public boolean existsById(Long categoryId) {
+        if (categoryId == null) {
+            return false;
+        }
         return categoryRepository.existsById(categoryId);
     }
     

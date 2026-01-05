@@ -9,6 +9,8 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
+import org.springframework.lang.NonNull;
+import org.springframework.lang.Nullable;
 
 /**
  * Logging configuration for request/response tracking
@@ -18,7 +20,7 @@ import org.slf4j.MDC;
 public class LoggingConfig implements WebMvcConfigurer {
 
     @Override
-    public void addInterceptors(InterceptorRegistry registry) {
+    public void addInterceptors(@NonNull InterceptorRegistry registry) {
         registry.addInterceptor(new LoggingInterceptor());
     }
 
@@ -32,7 +34,7 @@ public class LoggingConfig implements WebMvcConfigurer {
         private static final String START_TIME = "startTime";
 
         @Override
-        public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
+        public boolean preHandle(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull Object handler) {
             String requestId = java.util.UUID.randomUUID().toString();
             MDC.put(REQUEST_ID, requestId);
             MDC.put(START_TIME, String.valueOf(System.currentTimeMillis()));
@@ -46,8 +48,8 @@ public class LoggingConfig implements WebMvcConfigurer {
         }
 
         @Override
-        public void afterCompletion(HttpServletRequest request, HttpServletResponse response,
-                Object handler, Exception ex) {
+        public void afterCompletion(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response,
+                @NonNull Object handler, @Nullable Exception ex) {
             long startTime = Long.parseLong(MDC.get(START_TIME));
             long duration = System.currentTimeMillis() - startTime;
 

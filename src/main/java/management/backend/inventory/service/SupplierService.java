@@ -45,6 +45,7 @@ public class SupplierService {
 
     @Transactional
     public Supplier updateSupplier(Long id, UpdateSupplierRequest request) {
+        if (id == null) throw new IllegalArgumentException("ID cannot be null");
         Supplier supplier = supplierRepository.findById(id)
             .orElseThrow(() -> new IllegalArgumentException("Supplier not found"));
         supplier.setName(request.getName());
@@ -69,6 +70,7 @@ public class SupplierService {
 
     @Transactional
     public Supplier setActive(Long id, Boolean active) {
+        if (id == null) throw new IllegalArgumentException("ID cannot be null");
         Supplier supplier = supplierRepository.findById(id)
             .orElseThrow(() -> new IllegalArgumentException("Supplier not found"));
         supplier.setIsActive(active != null ? active : supplier.getIsActive());

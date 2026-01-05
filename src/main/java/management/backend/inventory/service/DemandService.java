@@ -14,7 +14,6 @@ import management.backend.inventory.repository.ItemRepository;
 import management.backend.inventory.repository.DemandItemRepository;
 import management.backend.inventory.repository.UserRepository;
 import management.backend.inventory.repository.EmployeeRepository;
-import management.backend.inventory.repository.WarehouseRepository;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,13 +26,11 @@ public class DemandService {
     private final ItemRepository itemRepository;
     private final DemandItemRepository demandItemRepository;
     private final EmployeeRepository employeeRepository;
-    private final WarehouseRepository warehouseRepository;
     private final UserRepository userRepository;
     
-    public DemandService(DemandRepository demandRepository, ItemRepository itemRepository, WarehouseRepository warehouseRepository, UserRepository userRepository, DemandItemRepository demandItemRepository, EmployeeRepository employeeRepository) {
+    public DemandService(DemandRepository demandRepository, ItemRepository itemRepository, UserRepository userRepository, DemandItemRepository demandItemRepository, EmployeeRepository employeeRepository) {
         this.demandRepository = demandRepository;
         this.itemRepository = itemRepository;
-        this.warehouseRepository = warehouseRepository;
         this.userRepository = userRepository;
         this.demandItemRepository = demandItemRepository;
         this.employeeRepository = employeeRepository;
@@ -44,16 +41,21 @@ public class DemandService {
         Item item = null;
         if (request.getItems() != null && !request.getItems().isEmpty()) {
             Long firstItemId = request.getItems().get(0).getItemId();
+            if (firstItemId == null) throw new IllegalArgumentException("Item ID in line items cannot be null");
             item = itemRepository.findById(firstItemId).orElseThrow(() -> new IllegalArgumentException("Item not found: " + firstItemId));
         } else if (request.getItemId() != null) {
-            item = itemRepository.findById(request.getItemId()).orElseThrow(() -> new IllegalArgumentException("Item not found"));
+            Long itemId = request.getItemId();
+            if (itemId == null) throw new IllegalArgumentException("Item ID cannot be null");
+            item = itemRepository.findById(itemId).orElseThrow(() -> new IllegalArgumentException("Item not found"));
         } else {
             throw new IllegalArgumentException("At least one item is required");
         }
         Employee emp = null;
         Warehouse warehouse = null;
         if (request.getEmployeeId() != null) {
-            emp = employeeRepository.findById(request.getEmployeeId()).orElseThrow(() -> new IllegalArgumentException("Employee not found"));
+            Long empId = request.getEmployeeId();
+            if (empId == null) throw new IllegalArgumentException("Employee ID cannot be null");
+            emp = employeeRepository.findById(empId).orElseThrow(() -> new IllegalArgumentException("Employee not found"));
             warehouse = emp.getBranch();
         }
         User user = resolveCurrentUser(authentication);
@@ -83,13 +85,17 @@ public class DemandService {
         d = demandRepository.save(d);
         if (request.getItems() != null && !request.getItems().isEmpty()) {
             for (var line : request.getItems()) {
-                Item it = itemRepository.findById(line.getItemId()).orElseThrow(() -> new IllegalArgumentException("Item not found: " + line.getItemId()));
+                Long itemId = line.getItemId();
+                if (itemId == null) throw new IllegalArgumentException("Item ID cannot be null");
+                Item it = itemRepository.findById(itemId).orElseThrow(() -> new IllegalArgumentException("Item not found: " + itemId));
                 DemandItem di = new DemandItem(d, it, line.getUnits() != null ? line.getUnits() : 1);
                 demandItemRepository.save(di);
             }
             // set primary item for backward compatibility display
             var first = request.getItems().get(0);
-            Item it = itemRepository.findById(first.getItemId()).orElseThrow(() -> new IllegalArgumentException("Item not found: " + first.getItemId()));
+            Long firstId = first.getItemId();
+            if (firstId == null) throw new IllegalArgumentException("Item ID cannot be null");
+            Item it = itemRepository.findById(firstId).orElseThrow(() -> new IllegalArgumentException("Item not found: " + firstId));
             d.setItem(it);
             d = demandRepository.save(d);
         } else {
@@ -106,18 +112,22 @@ public class DemandService {
     
     @Transactional(readOnly = true)
     public DemandResponse get(Long id) {
+        if (id == null) throw new IllegalArgumentException("ID cannot be null");
         Demand d = demandRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Demand not found"));
         return toResponse(d);
     }
     
     @Transactional
     public DemandResponse update(Long id, management.backend.inventory.dto.UpdateDemandRequest request) {
+        if (id == null) throw new IllegalArgumentException("ID cannot be null");
         Demand d = demandRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Demand not found"));
         if (request.getDemandCode() != null && !request.getDemandCode().isBlank()) {
             d.setDemandCode(request.getDemandCode());
         }
         if (request.getEmployeeId() != null) {
-            Employee emp = employeeRepository.findById(request.getEmployeeId()).orElseThrow(() -> new IllegalArgumentException("Employee not found"));
+            Long empId = request.getEmployeeId();
+            if (empId == null) throw new IllegalArgumentException("Employee ID cannot be null");
+            Employee emp = employeeRepository.findById(empId).orElseThrow(() -> new IllegalArgumentException("Employee not found"));
             d.setEmployee(emp);
             d.setDemanderName(emp.getName());
             d.setPosition(emp.getPosition());
@@ -125,7 +135,9 @@ public class DemandService {
             d.setWarehouse(emp.getBranch());
         }
         if (request.getItemId() != null) {
-            Item item = itemRepository.findById(request.getItemId()).orElseThrow(() -> new IllegalArgumentException("Item not found"));
+            Long itemId = request.getItemId();
+            if (itemId == null) throw new IllegalArgumentException("Item ID cannot be null");
+            Item item = itemRepository.findById(itemId).orElseThrow(() -> new IllegalArgumentException("Item not found"));
             d.setItem(item);
         }
         if (request.getUnit() != null) d.setUnit(request.getUnit());
@@ -138,30 +150,38 @@ public class DemandService {
             }
         }
         if (request.getNote() != null) d.setNote(request.getNote());
-        d = demandRepository.save(d);
+        var saved = demandRepository.save(d);
+        if (saved == null) throw new RuntimeException("Saved demand is null");
         if (request.getItems() != null) {
             // replace items
             for (DemandItem existing : demandItemRepository.findByDemand_DemandId(id)) {
+                if (existing == null) continue;
                 demandItemRepository.delete(existing);
             }
             if (!request.getItems().isEmpty()) {
                 for (var line : request.getItems()) {
-                    Item it = itemRepository.findById(line.getItemId()).orElseThrow(() -> new IllegalArgumentException("Item not found: " + line.getItemId()));
-                    DemandItem di = new DemandItem(d, it, line.getUnits() != null ? line.getUnits() : 1);
+                    Long itemId = line.getItemId();
+                    if (itemId == null) throw new IllegalArgumentException("Item ID cannot be null");
+                    Item it = itemRepository.findById(itemId).orElseThrow(() -> new IllegalArgumentException("Item not found: " + itemId));
+                    DemandItem di = new DemandItem(saved, it, line.getUnits() != null ? line.getUnits() : 1);
                     demandItemRepository.save(di);
                 }
                 var first = request.getItems().get(0);
-                Item it = itemRepository.findById(first.getItemId()).orElseThrow(() -> new IllegalArgumentException("Item not found: " + first.getItemId()));
-                d.setItem(it);
-                d = demandRepository.save(d);
+                Long firstId = first.getItemId();
+                if (firstId == null) throw new IllegalArgumentException("Item ID cannot be null");
+                Item it = itemRepository.findById(firstId).orElseThrow(() -> new IllegalArgumentException("Item not found: " + firstId));
+                saved.setItem(it);
+                saved = demandRepository.save(saved);
             }
         }
-        return toResponse(d);
+        return toResponse(saved);
     }
     
     @Transactional
     public void delete(Long id) {
+        if (id == null) throw new IllegalArgumentException("ID cannot be null");
         Demand d = demandRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Demand not found"));
+        if (d == null) throw new IllegalArgumentException("Demand not found");
         demandRepository.delete(d);
     }
     

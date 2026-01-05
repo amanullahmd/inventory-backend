@@ -55,12 +55,16 @@ public class PurchaseOrderService {
 
     @Transactional
     public PurchaseOrder createPurchaseOrder(CreatePurchaseOrderRequest request, Authentication authentication) {
-        Supplier supplier = supplierRepository.findById(request.getSupplierId())
+        Long supplierId = request.getSupplierId();
+        if (supplierId == null) throw new IllegalArgumentException("Supplier ID is required");
+        Supplier supplier = supplierRepository.findById(supplierId)
             .orElseThrow(() -> new IllegalArgumentException("Supplier not found"));
         if (supplier.getIsActive() == null || !supplier.getIsActive()) {
             throw new IllegalArgumentException("Supplier is inactive and cannot be used for purchase orders");
         }
-        Warehouse warehouse = warehouseRepository.findById(request.getWarehouseId())
+        Long warehouseId = request.getWarehouseId();
+        if (warehouseId == null) throw new IllegalArgumentException("Warehouse ID is required");
+        Warehouse warehouse = warehouseRepository.findById(warehouseId)
             .orElseThrow(() -> new IllegalArgumentException("Warehouse not found"));
         User currentUser = resolveCurrentUser(authentication);
 
@@ -82,6 +86,7 @@ public class PurchaseOrderService {
     
     @Transactional
     public PurchaseOrder addItems(Long purchaseOrderId, AddPurchaseOrderItemsRequest request) {
+        if (purchaseOrderId == null) throw new IllegalArgumentException("Purchase Order ID cannot be null");
         PurchaseOrder po = purchaseOrderRepository.findById(purchaseOrderId)
             .orElseThrow(() -> new IllegalArgumentException("Purchase order not found"));
         if (request.getItems() == null || request.getItems().isEmpty()) {
@@ -89,8 +94,10 @@ public class PurchaseOrderService {
         }
         java.math.BigDecimal total = po.getTotalAmount() != null ? po.getTotalAmount() : java.math.BigDecimal.ZERO;
         for (AddPurchaseOrderItemsRequest.Line line : request.getItems()) {
-            Item item = itemRepository.findById(line.getItemId())
-                .orElseThrow(() -> new IllegalArgumentException("Item not found: " + line.getItemId()));
+            Long itemId = line.getItemId();
+            if (itemId == null) throw new IllegalArgumentException("Item ID cannot be null");
+            Item item = itemRepository.findById(itemId)
+                .orElseThrow(() -> new IllegalArgumentException("Item not found: " + itemId));
             PurchaseOrderItem poi = new PurchaseOrderItem(po, item, line.getQuantity(), line.getUnitPrice());
             po.getItems().add(poi);
             total = total.add(line.getUnitPrice().multiply(new java.math.BigDecimal(line.getQuantity())));
@@ -105,6 +112,7 @@ public class PurchaseOrderService {
     
     @Transactional
     public PurchaseOrder updatePurchaseOrder(Long id, management.backend.inventory.dto.UpdatePurchaseOrderRequest request) {
+        if (id == null) throw new IllegalArgumentException("ID cannot be null");
         PurchaseOrder po = purchaseOrderRepository.findById(id)
             .orElseThrow(() -> new IllegalArgumentException("Purchase order not found"));
         if (request.getExpectedDeliveryDate() != null && !request.getExpectedDeliveryDate().isBlank()) {
@@ -121,11 +129,14 @@ public class PurchaseOrderService {
                 throw new IllegalArgumentException("Invalid status: " + request.getStatus());
             }
         }
-        return purchaseOrderRepository.save(po);
+        var saved = purchaseOrderRepository.save(po);
+        if (saved == null) throw new RuntimeException("Saved purchase order is null");
+        return saved;
     }
     
     @Transactional
     public void deletePurchaseOrder(Long id) {
+        if (id == null) throw new IllegalArgumentException("ID cannot be null");
         PurchaseOrder po = purchaseOrderRepository.findById(id)
             .orElseThrow(() -> new IllegalArgumentException("Purchase order not found"));
         if (po.getStatus() != PurchaseOrderStatus.DRAFT) {
@@ -136,6 +147,7 @@ public class PurchaseOrderService {
     
     @Transactional(readOnly = true)
     public management.backend.inventory.dto.PurchaseOrderDetailResponse getPurchaseOrder(Long id) {
+        if (id == null) throw new IllegalArgumentException("ID cannot be null");
         PurchaseOrder po = purchaseOrderRepository.findById(id)
             .orElseThrow(() -> new IllegalArgumentException("Purchase order not found"));
         java.util.List<management.backend.inventory.dto.PurchaseOrderItemResponse> itemDtos =
@@ -160,19 +172,23 @@ public class PurchaseOrderService {
     
     @Transactional
     public PurchaseOrder replaceItems(Long id, AddPurchaseOrderItemsRequest request) {
+        if (id == null) throw new IllegalArgumentException("ID cannot be null");
         PurchaseOrder po = purchaseOrderRepository.findById(id)
             .orElseThrow(() -> new IllegalArgumentException("Purchase order not found"));
         // Clear current items
         List<PurchaseOrderItem> existing = purchaseOrderItemRepository.findByPurchaseOrder_PurchaseOrderId(id);
         for (PurchaseOrderItem e : existing) {
+            if (e == null) continue;
             purchaseOrderItemRepository.delete(e);
         }
         po.getItems().clear();
         // Add new items
         java.math.BigDecimal total = java.math.BigDecimal.ZERO;
         for (AddPurchaseOrderItemsRequest.Line line : request.getItems()) {
-            Item item = itemRepository.findById(line.getItemId())
-                .orElseThrow(() -> new IllegalArgumentException("Item not found: " + line.getItemId()));
+            Long itemId = line.getItemId();
+            if (itemId == null) throw new IllegalArgumentException("Item ID cannot be null");
+            Item item = itemRepository.findById(itemId)
+                .orElseThrow(() -> new IllegalArgumentException("Item not found: " + itemId));
             PurchaseOrderItem poi = new PurchaseOrderItem(po, item, line.getQuantity(), line.getUnitPrice());
             po.getItems().add(poi);
             total = total.add(line.getUnitPrice().multiply(new java.math.BigDecimal(line.getQuantity())));
@@ -183,12 +199,14 @@ public class PurchaseOrderService {
     
     @Transactional
     public PurchaseOrder deleteItem(Long purchaseOrderItemId) {
+        if (purchaseOrderItemId == null) throw new IllegalArgumentException("ID cannot be null");
         PurchaseOrderItem poi = purchaseOrderItemRepository.findById(purchaseOrderItemId)
             .orElseThrow(() -> new IllegalArgumentException("Purchase order item not found"));
         PurchaseOrder po = poi.getPurchaseOrder();
         purchaseOrderItemRepository.delete(poi);
         // Recalculate total
-        java.math.BigDecimal total = purchaseOrderItemRepository.findByPurchaseOrder_PurchaseOrderId(po.getPurchaseOrderId()).stream()
+        Long poId = po.getPurchaseOrderId();
+        java.math.BigDecimal total = purchaseOrderItemRepository.findByPurchaseOrder_PurchaseOrderId(poId).stream()
             .map(PurchaseOrderItem::getLineTotal)
             .reduce(java.math.BigDecimal.ZERO, java.math.BigDecimal::add);
         po.setTotalAmount(total);

@@ -9,6 +9,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import org.springframework.lang.NonNull;
 
 /**
  * Rate limiting configuration
@@ -19,7 +20,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class RateLimitingConfig implements WebMvcConfigurer {
 
     @Override
-    public void addInterceptors(InterceptorRegistry registry) {
+    public void addInterceptors(@NonNull InterceptorRegistry registry) {
         registry.addInterceptor(new RateLimitingInterceptor());
     }
 
@@ -48,7 +49,7 @@ public class RateLimitingConfig implements WebMvcConfigurer {
         }
 
         @Override
-        public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) 
+        public boolean preHandle(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull Object handler) 
                 throws Exception {
             String clientIp = getClientIp(request);
             RequestCounter counter = requestCounts.computeIfAbsent(clientIp, k -> new RequestCounter());

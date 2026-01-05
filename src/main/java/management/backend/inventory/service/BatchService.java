@@ -32,15 +32,21 @@ public class BatchService {
 
     @Transactional
     public Batch createBatch(CreateBatchRequest request) {
-        Item item = itemRepository.findById(request.getItemId())
+        Long itemId = request.getItemId();
+        if (itemId == null) {
+             throw new IllegalArgumentException("Item ID is required");
+        }
+        Item item = itemRepository.findById(itemId)
             .orElseThrow(() -> new IllegalArgumentException("Item not found"));
 
         Batch batch = new Batch();
         batch.setItem(item);
         batch.setBatchNumber(request.getBatchNumber());
         if (request.getSupplierId() != null) {
-            Supplier supplier = supplierRepository.findById(request.getSupplierId())
-                .orElse(null);
+            Long supplierId = request.getSupplierId();
+            if (supplierId == null) throw new IllegalArgumentException("Supplier ID cannot be null");
+            Supplier supplier = supplierRepository.findById(supplierId)
+                .orElseThrow(() -> new IllegalArgumentException("Supplier not found"));
             batch.setSupplier(supplier);
         }
         if (request.getExpiryDate() != null && !request.getExpiryDate().isBlank()) {

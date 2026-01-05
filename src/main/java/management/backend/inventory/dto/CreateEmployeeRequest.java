@@ -13,6 +13,7 @@ public class CreateEmployeeRequest {
     private String address;
     private String servicePeriod;
     private String nidNumber;
+    private String employeeCode;
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
     public String getGrade() { return grade; }
@@ -31,4 +32,6 @@ public class CreateEmployeeRequest {
     public void setServicePeriod(String servicePeriod) { this.servicePeriod = servicePeriod; }
     public String getNidNumber() { return nidNumber; }
     public void setNidNumber(String nidNumber) { this.nidNumber = nidNumber; }
+    public String getEmployeeCode() { return employeeCode; }
+    public void setEmployeeCode(String employeeCode) { this.employeeCode = employeeCode; }
 }

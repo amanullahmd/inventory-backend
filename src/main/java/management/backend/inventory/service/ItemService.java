@@ -47,8 +47,10 @@ public class ItemService {
         if (request.getCategoryId() == null) {
             throw new IllegalArgumentException("Category is required");
         }
-        Category category = categoryRepository.findById(request.getCategoryId())
-            .orElseThrow(() -> new IllegalArgumentException("Category not found: " + request.getCategoryId()));
+        Long categoryId = request.getCategoryId();
+        if (categoryId == null) throw new IllegalArgumentException("Category ID cannot be null");
+        Category category = categoryRepository.findById(categoryId)
+            .orElseThrow(() -> new IllegalArgumentException("Category not found: " + categoryId));
 
         // Create and save the item
         Item item = new Item();
@@ -83,6 +85,7 @@ public class ItemService {
      * Allows correcting wrong information such as name, SKU, unit price, description and category.
      */
     public Item updateItem(Long itemId, CreateItemRequest request) {
+        if (itemId == null) throw new IllegalArgumentException("Item ID cannot be null");
         Item item = itemRepository.findById(itemId)
             .orElseThrow(() -> new IllegalArgumentException("Item not found: " + itemId));
 
@@ -116,7 +119,9 @@ public class ItemService {
         }
 
         if (request.getCategoryId() != null) {
-            Optional<Category> category = categoryRepository.findById(request.getCategoryId());
+            Long catId = request.getCategoryId();
+            if (catId == null) throw new IllegalArgumentException("Category ID cannot be null");
+            Optional<Category> category = categoryRepository.findById(catId);
             item.setCategory(category.orElse(null));
         }
 
@@ -177,6 +182,7 @@ public class ItemService {
      */
     @Transactional(readOnly = true)
     public Optional<Item> findById(Long itemId) {
+        if (itemId == null) return Optional.empty();
         return itemRepository.findById(itemId);
     }
     
@@ -193,6 +199,9 @@ public class ItemService {
      */
     @Transactional(readOnly = true)
     public Optional<ItemStockResponse> getItemWithStock(Long itemId) {
+        if (itemId == null) {
+            return Optional.empty();
+        }
         Optional<Item> itemOpt = itemRepository.findById(itemId);
         if (itemOpt.isEmpty()) {
             return Optional.empty();
@@ -277,6 +286,9 @@ public class ItemService {
      */
     @Transactional(readOnly = true)
     public boolean existsById(Long itemId) {
+        if (itemId == null) {
+            return false;
+        }
         return itemRepository.existsById(itemId);
     }
     
