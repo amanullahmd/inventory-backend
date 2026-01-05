@@ -156,13 +156,17 @@ public class ItemService {
                     item.getItemId(),
                     item.getName(),
                     item.getSku(),
+                    item.getDescription(),
                     item.getUnitPrice(),
                     item.getCreatedAt(),
                     currentStock,
                     totalStockIn,
                     totalStockOut,
                     categoryId,
-                    categoryName
+                    categoryName,
+                    item.getMinimumStock(),
+                    item.getMaximumStock(),
+                    item.getReorderLevel()
                 );
             })
             .collect(Collectors.toList());
@@ -207,13 +211,17 @@ public class ItemService {
             item.getItemId(),
             item.getName(),
             item.getSku(),
+            item.getDescription(),
             item.getUnitPrice(),
             item.getCreatedAt(),
             currentStock,
             totalStockIn,
             totalStockOut,
             categoryId,
-            categoryName
+            categoryName,
+            item.getMinimumStock(),
+            item.getMaximumStock(),
+            item.getReorderLevel()
         );
         
         return Optional.of(response);
@@ -248,13 +256,17 @@ public class ItemService {
                     item.getItemId(),
                     item.getName(),
                     item.getSku(),
+                    item.getDescription(),
                     item.getUnitPrice(),
                     item.getCreatedAt(),
                     currentStock,
                     totalStockIn,
                     totalStockOut,
                     categoryId,
-                    categoryName
+                    categoryName,
+                    item.getMinimumStock(),
+                    item.getMaximumStock(),
+                    item.getReorderLevel()
                 );
             })
             .collect(Collectors.toList());
@@ -295,9 +307,14 @@ public class ItemService {
             })
             .reduce(BigDecimal.ZERO, BigDecimal::add);
         
-        // Calculate low stock items count (1-9 units)
+        // Calculate low stock items count based on threshold (currentStock < minimumStock)
         Integer lowStockItems = (int) allItems.stream()
-            .filter(item -> item.getCurrentStock() >= 1 && item.getCurrentStock() <= 9)
+            .filter(item -> {
+                Integer cs = item.getCurrentStock();
+                Long min = item.getMinimumStock();
+                int threshold = (min != null && min > 0) ? min.intValue() : 10;
+                return cs != null && cs >= 0 && cs < threshold;
+            })
             .count();
         
         // Calculate out of stock items count (0 units)

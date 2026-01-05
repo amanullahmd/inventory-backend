@@ -57,6 +57,9 @@ public class PurchaseOrderService {
     public PurchaseOrder createPurchaseOrder(CreatePurchaseOrderRequest request, Authentication authentication) {
         Supplier supplier = supplierRepository.findById(request.getSupplierId())
             .orElseThrow(() -> new IllegalArgumentException("Supplier not found"));
+        if (supplier.getIsActive() == null || !supplier.getIsActive()) {
+            throw new IllegalArgumentException("Supplier is inactive and cannot be used for purchase orders");
+        }
         Warehouse warehouse = warehouseRepository.findById(request.getWarehouseId())
             .orElseThrow(() -> new IllegalArgumentException("Warehouse not found"));
         User currentUser = resolveCurrentUser(authentication);

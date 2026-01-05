@@ -320,13 +320,17 @@ public class StockService {
                     item.getItemId(),
                     item.getName(),
                     item.getSku(),
+                    item.getDescription(),
                     item.getUnitPrice(),
                     item.getCreatedAt(),
                     currentStock,
                     totalStockIn,
                     totalStockOut,
                     categoryId,
-                    categoryName
+                    categoryName,
+                    item.getMinimumStock(),
+                    item.getMaximumStock(),
+                    item.getReorderLevel()
                 );
             })
             .collect(Collectors.toList());
@@ -357,13 +361,17 @@ public class StockService {
             item.getItemId(),
             item.getName(),
             item.getSku(),
+            item.getDescription(),
             item.getUnitPrice(),
             item.getCreatedAt(),
             currentStock,
             totalStockIn,
             totalStockOut,
             categoryId,
-            categoryName
+            categoryName,
+            item.getMinimumStock(),
+            item.getMaximumStock(),
+            item.getReorderLevel()
         );
         
         return Optional.of(response);
