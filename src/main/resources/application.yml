@@ -58,7 +58,7 @@ springdoc:
     tags-sorter: alpha
 
 jwt:
-  secret: ${JWT_SECRET:change-this-in-prod-32-bytes-min}
+  secret: ${JWT_SECRET:XdXwEuV/h3T7Cw6fJi7lrJqufBRdfct8eSs2lMySpsw=}
   access-token-expiration: 900000
   refresh-token-expiration: 604800000
 

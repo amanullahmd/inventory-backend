@@ -18,7 +18,7 @@ public class UserProfileRequest {
     
     private String branchName;
     private String position;
-    private String grade;
+    private Long gradeId;
     
     // Constructors
     public UserProfileRequest() {}
@@ -62,12 +62,12 @@ public class UserProfileRequest {
         this.position = position;
     }
     
-    public String getGrade() {
-        return grade;
+    public Long getGradeId() {
+        return gradeId;
     }
     
-    public void setGrade(String grade) {
-        this.grade = grade;
+    public void setGradeId(Long gradeId) {
+        this.gradeId = gradeId;
     }
     
     @Override

@@ -42,8 +42,9 @@ public class User implements UserDetails {
     @Column(name = "position", length = 100)
     private String position;
 
-    @Column(name = "grade", length = 50)
-    private String grade;
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "grade_id")
+    private Grade grade;
 
     @Column(name = "enabled", nullable = false)
     private Boolean enabled = true;
@@ -139,11 +140,11 @@ public class User implements UserDetails {
         this.position = position;
     }
 
-    public String getGrade() {
+    public Grade getGrade() {
         return grade;
     }
 
-    public void setGrade(String grade) {
+    public void setGrade(Grade grade) {
         this.grade = grade;
     }
 

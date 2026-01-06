@@ -5,6 +5,7 @@ import management.backend.inventory.dto.UserProfileRequest;
 import management.backend.inventory.dto.UserProfileResponse;
 import management.backend.inventory.entity.User;
 import management.backend.inventory.entity.UserRoleEnum;
+import management.backend.inventory.repository.GradeRepository;
 import management.backend.inventory.repository.UserRepository;
 
 import org.springframework.stereotype.Service;
@@ -19,6 +20,7 @@ import java.util.stream.Collectors;
 public class NativeUserService {
 
     private final UserRepository userRepository;
+    private final GradeRepository gradeRepository;
 
     @Transactional
     public User createUser(User user) {
@@ -88,8 +90,9 @@ public class NativeUserService {
         if (request.getPosition() != null) {
             user.setPosition(request.getPosition());
         }
-        if (request.getGrade() != null) {
-            user.setGrade(request.getGrade());
+        if (request.getGradeId() != null) {
+            gradeRepository.findById(request.getGradeId())
+                    .ifPresent(user::setGrade);
         }
 
         User updatedUser = userRepository.save(user);

@@ -22,4 +22,6 @@ public class RegisterRequest {
     private String password;
 
     private String name;
+
+    private Long gradeId;
 }

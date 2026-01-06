@@ -10,6 +10,7 @@ import management.backend.inventory.dto.RegisterRequest;
 import management.backend.inventory.entity.User;
 import management.backend.inventory.entity.UserRoleEnum;
 import management.backend.inventory.exception.ValidationException;
+import management.backend.inventory.repository.GradeRepository;
 import management.backend.inventory.repository.UserRepository;
 import management.backend.inventory.util.PasswordValidator;
 
@@ -30,6 +31,7 @@ public class AuthService {
     private static final Logger log = LoggerFactory.getLogger(AuthService.class);
 
     private final UserRepository userRepository;
+    private final GradeRepository gradeRepository;
     private final JwtTokenProvider jwtTokenProvider;
     private final PasswordEncoder passwordEncoder;
     private final PasswordValidator passwordValidator;
@@ -55,6 +57,11 @@ public class AuthService {
         user.setTemporaryPassword(false);
         user.setLastPasswordChangeAt(LocalDateTime.now());
         user.setRole(UserRoleEnum.USER);
+
+        if (request.getGradeId() != null) {
+            gradeRepository.findById(request.getGradeId())
+                    .ifPresent(user::setGrade);
+        }
 
         user = userRepository.save(user);
 
