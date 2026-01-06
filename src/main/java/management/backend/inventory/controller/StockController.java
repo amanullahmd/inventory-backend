@@ -45,7 +45,7 @@ public class StockController {
      * Accessible to User role only (Admins cannot perform stock operations)
      */
     @PostMapping("/in")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAuthority('STOCK_IN')")
     public ResponseEntity<java.util.Map<String, Object>> recordStockIn(@Valid @RequestBody StockMovementRequest request, Authentication authentication) {
         try {
             StockMovement movement = stockService.recordStockIn(request, authentication);
@@ -66,14 +66,14 @@ public class StockController {
      * Accessible to User role only (Admins cannot perform stock operations)
      */
     @PostMapping("/out")
-    @PreAuthorize("hasRole('USER') and !hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('STOCK_OUT')")
     public ResponseEntity<StockMovement> recordStockOut(@Valid @RequestBody StockMovementRequest request, Authentication authentication) {
         StockMovement movement = stockService.recordStockOut(request, authentication);
         return ResponseEntity.status(HttpStatus.CREATED).body(movement);
     }
     
     @PostMapping("/in/batch")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAuthority('STOCK_IN')")
     @Operation(summary = "Create stock-in batch", description = "Record multiple stock-in items under one reference id")
     public ResponseEntity<java.util.Map<String, Object>> recordStockInBatch(@Valid @RequestBody StockInBatchRequest request, Authentication authentication) {
         try {
@@ -86,14 +86,14 @@ public class StockController {
     }
     
     @GetMapping("/in/grouped")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAuthority('STOCK_READ')")
     @Operation(summary = "List stock-in groups", description = "List stock-in transactions grouped by reference number with creator and date")
     public ResponseEntity<List<java.util.Map<String, Object>>> getStockInGroups() {
         return ResponseEntity.ok(stockService.getStockInSummaries());
     }
     
     @GetMapping("/in/{referenceNumber}")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAuthority('STOCK_READ')")
     @Operation(summary = "Get stock-in by reference", description = "Retrieve stock-in items for a reference id")
     public ResponseEntity<List<java.util.Map<String, Object>>> getStockInByReference(@PathVariable String referenceNumber) {
         List<java.util.Map<String, Object>> details = stockService.getStockInDetails(referenceNumber);
@@ -101,7 +101,7 @@ public class StockController {
     }
     
     @PutMapping("/in/{referenceNumber}")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAuthority('STOCK_IN')")
     @Operation(summary = "Update stock-in batch", description = "Update items for a stock-in ID; allowed only same day")
     public ResponseEntity<java.util.Map<String, Object>> updateStockIn(
         @PathVariable String referenceNumber,
@@ -118,7 +118,7 @@ public class StockController {
     }
     
     @DeleteMapping("/in/{referenceNumber}")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAuthority('STOCK_IN')")
     @Operation(summary = "Delete stock-in batch", description = "Delete items for a stock-in ID; allowed only same day")
     public ResponseEntity<Void> deleteStockIn(@PathVariable String referenceNumber) {
         try {
@@ -135,7 +135,7 @@ public class StockController {
      * Accessible to authenticated users (both Admin and User roles)
      */
     @GetMapping
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAuthority('STOCK_READ')")
     public ResponseEntity<List<ItemStockResponse>> getStockSummary() {
         List<ItemStockResponse> stockSummary = stockService.getStockSummaryForAllItems();
         return ResponseEntity.ok(stockSummary);
@@ -146,7 +146,7 @@ public class StockController {
      * Accessible to authenticated users (both Admin and User roles)
      */
     @GetMapping("/{itemId}")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAuthority('STOCK_READ')")
     public ResponseEntity<ItemStockResponse> getStockSummaryForItem(@PathVariable Long itemId) {
         return stockService.getStockSummaryForItem(itemId)
             .map(ResponseEntity::ok)
@@ -159,7 +159,7 @@ public class StockController {
      * Accessible to authenticated users
      */
     @GetMapping("/reasons")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAuthority('STOCK_READ')")
     public ResponseEntity<List<StockOutReasonResponse>> getPredefinedReasons() {
         List<StockOutReasonResponse> reasons = stockOutReasonService.getPredefinedReasons();
         return ResponseEntity.ok(reasons);
@@ -171,7 +171,7 @@ public class StockController {
      * Accessible to authenticated users
      */
     @GetMapping("/reasons/breakdown")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAuthority('STOCK_READ')")
     public ResponseEntity<ReasonBreakdownResponse> getReasonBreakdown(
             @RequestParam(required = false) String startDate,
             @RequestParam(required = false) String endDate) {
@@ -200,7 +200,7 @@ public class StockController {
      * Accessible to authenticated users
      */
     @GetMapping("/movements/history")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAuthority('STOCK_READ')")
     public ResponseEntity<List<StockMovement>> getMovementHistory(
             @RequestParam(required = false) String startDate,
             @RequestParam(required = false) String endDate) {

@@ -37,7 +37,7 @@ public class UserProfileResponse {
             this.gradeNumber = user.getGrade().getGradeNumber();
             this.gradeDescription = user.getGrade().getDescription();
         }
-        this.roles = List.of(user.getRole().getAuthority());
+        this.roles = List.of(user.getRole().getName());
         this.createdAt = user.getCreatedAt();
         this.updatedAt = user.getUpdatedAt();
     }

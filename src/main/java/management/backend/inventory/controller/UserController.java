@@ -50,7 +50,7 @@ public class UserController {
      * Accessible to authenticated users (admin only)
      */
     @GetMapping
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAuthority('USER_READ')")
     public ResponseEntity<List<UserProfileResponse>> getAllUsers() {
         List<UserProfileResponse> users = userService.getAllUsers();
         return ResponseEntity.ok(users);

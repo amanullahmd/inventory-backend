@@ -26,7 +26,7 @@ public class GradeController {
     }
 
     @PostMapping
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAuthority('GRADE_MANAGE')")
     public ResponseEntity<Grade> createGrade(@RequestBody Grade grade) {
         if (gradeRepository.findByGradeNumber(grade.getGradeNumber()).isPresent()) {
             throw new IllegalArgumentException("Grade number already exists");
@@ -35,7 +35,7 @@ public class GradeController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAuthority('GRADE_MANAGE')")
     public ResponseEntity<Grade> updateGrade(@PathVariable Long id, @RequestBody Grade gradeDetails) {
         Grade grade = gradeRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Grade not found"));
@@ -47,7 +47,7 @@ public class GradeController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAuthority('GRADE_MANAGE')")
     public ResponseEntity<Void> deleteGrade(@PathVariable Long id) {
         Grade grade = gradeRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Grade not found"));

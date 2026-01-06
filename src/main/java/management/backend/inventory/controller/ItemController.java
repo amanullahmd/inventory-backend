@@ -42,7 +42,7 @@ public class ItemController {
      * Accessible to authenticated users (both Admin and User roles)
      */
     @GetMapping
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAuthority('ITEM_READ')")
     @Operation(summary = "Get all items", description = "Retrieve all inventory items with current stock calculations")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Items retrieved successfully"),
@@ -60,7 +60,7 @@ public class ItemController {
      * Accessible to authenticated users (both Admin and User roles)
      */
     @PostMapping
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAuthority('ITEM_CREATE')")
     @Operation(summary = "Create new item", description = "Create a new inventory item with name, SKU, and unit cost")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "201", description = "Item created successfully"),
@@ -83,7 +83,7 @@ public class ItemController {
      * Accessible to authenticated users (both Admin and User roles)
      */
     @GetMapping("/{itemId}")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAuthority('ITEM_READ')")
     @Operation(summary = "Get item by ID", description = "Retrieve a specific item with its current stock information")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Item retrieved successfully"),
@@ -120,7 +120,7 @@ public class ItemController {
      * Accessible to authenticated users.
      */
     @PutMapping("/{itemId}")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAuthority('ITEM_UPDATE')")
     @Operation(summary = "Update item", description = "Update item details like name, SKU, unit price, description, category")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Item updated successfully"),

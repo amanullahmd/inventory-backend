@@ -6,32 +6,24 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.HashSet;
-import java.util.Set;
-
 @Entity
-@Table(name = "roles")
+@Table(name = "permissions")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Role {
+public class Permission {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "role_id")
+    @Column(name = "permission_id")
     private Long id;
 
     @Column(name = "name", nullable = false, unique = true)
-    private String name; // e.g., Administrator
+    private String name; // e.g., ITEM_CREATE
 
     @Column(name = "description")
     private String description;
 
-    @ManyToMany(fetch = FetchType.EAGER)
-    @JoinTable(
-        name = "role_permissions",
-        joinColumns = @JoinColumn(name = "role_id"),
-        inverseJoinColumns = @JoinColumn(name = "permission_id")
-    )
-    private Set<Permission> permissions = new HashSet<>();
+    @Column(name = "module", nullable = false)
+    private String module; // e.g., INVENTORY, USERS
 }

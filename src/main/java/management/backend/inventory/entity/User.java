@@ -64,9 +64,9 @@ public class User implements UserDetails {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "role", nullable = false, length = 20)
-    private UserRoleEnum role = UserRoleEnum.USER;
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "role_id", nullable = false)
+    private Role role;
 
     @PrePersist
     protected void onCreate() {
@@ -196,22 +196,20 @@ public class User implements UserDetails {
         this.updatedAt = updatedAt;
     }
 
-    public UserRoleEnum getRole() {
+    public Role getRole() {
         return role;
     }
 
-    public void setRole(UserRoleEnum role) {
+    public void setRole(Role role) {
         this.role = role;
-    }
-
-    public void setRoleByAuthority(String authority) {
-        this.role = UserRoleEnum.fromAuthority(authority);
     }
 
     // UserDetails Implementation
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return Collections.singletonList(new SimpleGrantedAuthority(role.getAuthority()));
+        return role.getPermissions().stream()
+                .map(permission -> new SimpleGrantedAuthority(permission.getName()))
+                .collect(java.util.stream.Collectors.toList());
     }
 
     @Override

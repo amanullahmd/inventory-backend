@@ -3,6 +3,7 @@ package management.backend.inventory.config;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import management.backend.inventory.entity.User;
+import management.backend.inventory.entity.Permission;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -11,6 +12,7 @@ import org.springframework.stereotype.Component;
 import javax.crypto.SecretKey;
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Component
 public class JwtTokenProvider {
@@ -40,12 +42,15 @@ public class JwtTokenProvider {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + expirationTime);
 
-        List<String> roles = List.of(user.getRole().getAuthority());
+        List<String> permissions = user.getRole().getPermissions().stream()
+                .map(Permission::getName)
+                .collect(Collectors.toList());
 
         return Jwts.builder()
                 .setSubject(user.getId().toString())
                 .claim("email", user.getEmail())
-                .claim("roles", roles)
+                .claim("role", user.getRole().getName())
+                .claim("permissions", permissions)
                 .setIssuedAt(now)
                 .setExpiration(expiryDate)
                 .signWith(key, SignatureAlgorithm.HS256)
@@ -83,13 +88,22 @@ public class JwtTokenProvider {
     }
 
     @SuppressWarnings("unchecked")
-    public List<String> extractRolesFromToken(String token) {
+    public List<String> extractPermissionsFromToken(String token) {
         Claims claims = Jwts.parserBuilder()
                 .setSigningKey(key)
                 .build()
                 .parseClaimsJws(token)
                 .getBody();
-        return (List<String>) claims.get("roles");
+        return (List<String>) claims.get("permissions");
+    }
+
+    public String extractRoleFromToken(String token) {
+        Claims claims = Jwts.parserBuilder()
+                .setSigningKey(key)
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
+        return claims.get("role", String.class);
     }
 
     public String extractEmailFromToken(String token) {

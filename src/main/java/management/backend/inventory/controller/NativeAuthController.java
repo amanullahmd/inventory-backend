@@ -31,7 +31,7 @@ public class NativeAuthController {
         AuthUserResponse response = AuthUserResponse.builder()
                 .id(user.getId())
                 .email(user.getEmail())
-                .roles(List.of(user.getRole().getAuthority()))
+                .roles(List.of(user.getRole().getName()))
                 .build();
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
@@ -89,7 +89,7 @@ public class NativeAuthController {
         AuthUserResponse response = AuthUserResponse.builder()
                 .id(user.getId())
                 .email(user.getEmail())
-                .roles(List.of(user.getRole().getAuthority()))
+                .roles(List.of(user.getRole().getName()))
                 .build();
 
         return ResponseEntity.ok(response);

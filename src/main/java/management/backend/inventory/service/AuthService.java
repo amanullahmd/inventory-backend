@@ -7,10 +7,11 @@ import management.backend.inventory.dto.LoginRequest;
 import management.backend.inventory.dto.LoginResponse;
 import management.backend.inventory.dto.RefreshRequest;
 import management.backend.inventory.dto.RegisterRequest;
+import management.backend.inventory.entity.Role;
 import management.backend.inventory.entity.User;
-import management.backend.inventory.entity.UserRoleEnum;
 import management.backend.inventory.exception.ValidationException;
 import management.backend.inventory.repository.GradeRepository;
+import management.backend.inventory.repository.RoleRepository;
 import management.backend.inventory.repository.UserRepository;
 import management.backend.inventory.util.PasswordValidator;
 
@@ -32,6 +33,7 @@ public class AuthService {
 
     private final UserRepository userRepository;
     private final GradeRepository gradeRepository;
+    private final RoleRepository roleRepository;
     private final JwtTokenProvider jwtTokenProvider;
     private final PasswordEncoder passwordEncoder;
     private final PasswordValidator passwordValidator;
@@ -56,7 +58,10 @@ public class AuthService {
         user.setPasswordChangeRequired(false);
         user.setTemporaryPassword(false);
         user.setLastPasswordChangeAt(LocalDateTime.now());
-        user.setRole(UserRoleEnum.USER);
+        
+        Role defaultRole = roleRepository.findByName("Standard User")
+                .orElseThrow(() -> new RuntimeException("Default role 'Standard User' not found"));
+        user.setRole(defaultRole);
 
         if (request.getGradeId() != null) {
             gradeRepository.findById(request.getGradeId())
@@ -86,7 +91,7 @@ public class AuthService {
         return LoginResponse.builder()
                 .id(user.getId())
                 .email(user.getEmail())
-                .roles(List.of(user.getRole().getAuthority()))
+                .roles(List.of(user.getRole().getName()))
                 .accessToken(accessToken)
                 .refreshToken(refreshToken)
                 .expiresIn(900L)
@@ -112,7 +117,7 @@ public class AuthService {
         return LoginResponse.builder()
                 .id(user.getId())
                 .email(user.getEmail())
-                .roles(List.of(user.getRole().getAuthority()))
+                .roles(List.of(user.getRole().getName()))
                 .accessToken(newAccessToken)
                 .refreshToken(request.getRefreshToken())
                 .expiresIn(900L)

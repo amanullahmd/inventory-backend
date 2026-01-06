@@ -55,7 +55,7 @@ public class CategoryController {
      * Accessible to authenticated users (both Admin and User roles)
      */
     @PostMapping
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAuthority('CATEGORY_MANAGE')")
     public ResponseEntity<CategoryResponse> createCategory(@RequestBody Map<String, String> request) {
         String name = request.get("name");
         String description = request.get("description");
@@ -79,7 +79,7 @@ public class CategoryController {
      * Accessible to authenticated users (both Admin and User roles)
      */
     @PutMapping("/{categoryId}")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAuthority('CATEGORY_MANAGE')")
     public ResponseEntity<CategoryResponse> updateCategory(
             @PathVariable Long categoryId,
             @RequestBody Map<String, String> request) {

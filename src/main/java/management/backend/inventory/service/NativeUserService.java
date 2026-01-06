@@ -4,8 +4,9 @@ import lombok.RequiredArgsConstructor;
 import management.backend.inventory.dto.UserProfileRequest;
 import management.backend.inventory.dto.UserProfileResponse;
 import management.backend.inventory.entity.User;
-import management.backend.inventory.entity.UserRoleEnum;
+import management.backend.inventory.entity.Role;
 import management.backend.inventory.repository.GradeRepository;
+import management.backend.inventory.repository.RoleRepository;
 import management.backend.inventory.repository.UserRepository;
 
 import org.springframework.stereotype.Service;
@@ -21,13 +22,16 @@ public class NativeUserService {
 
     private final UserRepository userRepository;
     private final GradeRepository gradeRepository;
+    private final RoleRepository roleRepository;
 
     @Transactional
     public User createUser(User user) {
         // Password should already be encoded before calling this method
-        // Default role is USER if not specified
+        // Default role is Standard User if not specified
         if (user.getRole() == null) {
-            user.setRole(UserRoleEnum.USER);
+            Role defaultRole = roleRepository.findByName("Standard User")
+                    .orElseThrow(() -> new RuntimeException("Default role 'Standard User' not found"));
+            user.setRole(defaultRole);
         }
         return userRepository.save(user);
     }
@@ -42,7 +46,9 @@ public class NativeUserService {
     }
 
     @Transactional
-    public void assignRole(User user, UserRoleEnum role) {
+    public void assignRole(User user, String roleName) {
+        Role role = roleRepository.findByName(roleName)
+                .orElseThrow(() -> new IllegalArgumentException("Role not found: " + roleName));
         user.setRole(role);
         userRepository.save(user);
     }
@@ -55,17 +61,17 @@ public class NativeUserService {
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
     }
 
-    public UserRoleEnum getUserRole(Long userId) {
+    public Role getUserRole(Long userId) {
         User user = getUserWithRole(userId);
         return user.getRole();
     }
 
     public boolean isAdmin(Long userId) {
-        return getUserRole(userId).isAdmin();
+        return "Administrator".equals(getUserRole(userId).getName());
     }
 
     public boolean isUser(Long userId) {
-        return getUserRole(userId).isUser();
+        return "Standard User".equals(getUserRole(userId).getName());
     }
 
     @Transactional
