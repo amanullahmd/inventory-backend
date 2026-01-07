@@ -32,6 +32,9 @@ public class EmployeeService {
         e.setAddress(req.getAddress());
         e.setServicePeriod(req.getServicePeriod());
         e.setNidNumber(req.getNidNumber());
+        e.setDateOfBirth(req.getDateOfBirth());
+        e.setGender(req.getGender());
+        e.setNationality(req.getNationality());
         if (req.getBranchId() != null) {
             Long branchId = req.getBranchId();
             if (branchId == null) throw new IllegalArgumentException("Branch ID cannot be null");
@@ -76,6 +79,9 @@ public class EmployeeService {
         if (req.getAddress() != null) e.setAddress(req.getAddress());
         if (req.getServicePeriod() != null) e.setServicePeriod(req.getServicePeriod());
         if (req.getNidNumber() != null) e.setNidNumber(req.getNidNumber());
+        if (req.getDateOfBirth() != null) e.setDateOfBirth(req.getDateOfBirth());
+        if (req.getGender() != null) e.setGender(req.getGender());
+        if (req.getNationality() != null) e.setNationality(req.getNationality());
         var saved = employeeRepository.save(e);
         if (saved == null) throw new RuntimeException("Saved employee is null");
         return toResponse(saved);
@@ -124,6 +130,9 @@ public class EmployeeService {
             e.getAddress(),
             e.getServicePeriod(),
             e.getNidNumber(),
+            e.getDateOfBirth(),
+            e.getGender(),
+            e.getNationality(),
             e.getCreatedAt(),
             e.getUpdatedAt()
         );

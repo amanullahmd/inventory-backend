@@ -1,5 +1,6 @@
 package management.backend.inventory.dto;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 public class EmployeeResponse {
@@ -15,11 +16,15 @@ public class EmployeeResponse {
     private String address;
     private String servicePeriod;
     private String nidNumber;
+    private LocalDate dateOfBirth;
+    private String gender;
+    private String nationality;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     public EmployeeResponse(Long employeeId, String employeeCode, String name, String grade, String position,
                             Long branchId, String branchName, String mobileNumber, String email, String address,
-                            String servicePeriod, String nidNumber, LocalDateTime createdAt, LocalDateTime updatedAt) {
+                            String servicePeriod, String nidNumber, LocalDate dateOfBirth, String gender, String nationality,
+                            LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.employeeId = employeeId;
         this.employeeCode = employeeCode;
         this.name = name;
@@ -32,6 +37,9 @@ public class EmployeeResponse {
         this.address = address;
         this.servicePeriod = servicePeriod;
         this.nidNumber = nidNumber;
+        this.dateOfBirth = dateOfBirth;
+        this.gender = gender;
+        this.nationality = nationality;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
     }
@@ -47,6 +55,9 @@ public class EmployeeResponse {
     public String getAddress() { return address; }
     public String getServicePeriod() { return servicePeriod; }
     public String getNidNumber() { return nidNumber; }
+    public LocalDate getDateOfBirth() { return dateOfBirth; }
+    public String getGender() { return gender; }
+    public String getNationality() { return nationality; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }
 }

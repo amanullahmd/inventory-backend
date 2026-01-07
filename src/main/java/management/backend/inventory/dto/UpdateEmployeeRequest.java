@@ -1,5 +1,7 @@
 package management.backend.inventory.dto;
 
+import java.time.LocalDate;
+
 public class UpdateEmployeeRequest {
     private String employeeCode;
     private String name;
@@ -11,6 +13,9 @@ public class UpdateEmployeeRequest {
     private String address;
     private String servicePeriod;
     private String nidNumber;
+    private LocalDate dateOfBirth;
+    private String gender;
+    private String nationality;
     public String getEmployeeCode() { return employeeCode; }
     public void setEmployeeCode(String employeeCode) { this.employeeCode = employeeCode; }
     public String getName() { return name; }
@@ -31,4 +36,10 @@ public class UpdateEmployeeRequest {
     public void setServicePeriod(String servicePeriod) { this.servicePeriod = servicePeriod; }
     public String getNidNumber() { return nidNumber; }
     public void setNidNumber(String nidNumber) { this.nidNumber = nidNumber; }
+    public LocalDate getDateOfBirth() { return dateOfBirth; }
+    public void setDateOfBirth(LocalDate dateOfBirth) { this.dateOfBirth = dateOfBirth; }
+    public String getGender() { return gender; }
+    public void setGender(String gender) { this.gender = gender; }
+    public String getNationality() { return nationality; }
+    public void setNationality(String nationality) { this.nationality = nationality; }
 }

@@ -21,6 +21,13 @@ public class RegisterRequest {
     @Size(min = 8, message = "Password must be at least 8 characters")
     private String password;
 
+    private String firstName;
+    private String lastName;
+    private String position;
+    private Long warehouseId;
+    private String role; // "ADMIN", "USER", etc.
+
+    @Deprecated
     private String name;
 
     private Long gradeId;

@@ -1,6 +1,7 @@
 package management.backend.inventory.entity;
 
 import jakarta.persistence.*;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
@@ -45,6 +46,15 @@ public class Employee {
     @Column(name = "nid_number", length = 100)
     private String nidNumber;
     
+    @Column(name = "date_of_birth")
+    private LocalDate dateOfBirth;
+
+    @Column(name = "gender", length = 20)
+    private String gender;
+
+    @Column(name = "nationality", length = 100)
+    private String nationality;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
     
@@ -80,6 +90,12 @@ public class Employee {
     public void setServicePeriod(String servicePeriod) { this.servicePeriod = servicePeriod; }
     public String getNidNumber() { return nidNumber; }
     public void setNidNumber(String nidNumber) { this.nidNumber = nidNumber; }
+    public LocalDate getDateOfBirth() { return dateOfBirth; }
+    public void setDateOfBirth(LocalDate dateOfBirth) { this.dateOfBirth = dateOfBirth; }
+    public String getGender() { return gender; }
+    public void setGender(String gender) { this.gender = gender; }
+    public String getNationality() { return nationality; }
+    public void setNationality(String nationality) { this.nationality = nationality; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }
 }

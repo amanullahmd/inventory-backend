@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
 import java.util.List;
+import management.backend.inventory.dto.UserUpdateRequest;
 
 /**
  * Controller for user management endpoints.
@@ -80,6 +81,28 @@ public class UserController {
     }
     
     
+    
+    /**
+     * PUT /api/users/{id} - Update a user (Admin only).
+     */
+    @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<UserProfileResponse>> updateUser(
+            @PathVariable Long id, 
+            @Valid @RequestBody UserUpdateRequest request) {
+        
+        try {
+            UserProfileResponse updatedProfile = userService.updateUser(id, request);
+            return ResponseEntity.ok(new ApiResponse<>(updatedProfile, "User updated successfully"));
+        } catch (IllegalArgumentException e) {
+            if (e.getMessage().contains("Email already exists")) {
+                return ResponseEntity.status(HttpStatus.CONFLICT)
+                        .body(new ApiResponse<>(null, "Email already exists", false));
+            }
+            return ResponseEntity.badRequest()
+                    .body(new ApiResponse<>(null, e.getMessage(), false));
+        }
+    }
     
     /**
      * Helper method to get current user ID from security context.

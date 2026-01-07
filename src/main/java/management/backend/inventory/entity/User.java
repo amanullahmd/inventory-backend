@@ -36,6 +36,12 @@ public class User implements UserDetails {
     @Column(name = "password", nullable = false)
     private String password;
 
+    @Column(name = "first_name", length = 100)
+    private String firstName;
+
+    @Column(name = "last_name", length = 100)
+    private String lastName;
+
     @Column(name = "name", nullable = true, length = 255)
     private String name;
 
@@ -45,6 +51,10 @@ public class User implements UserDetails {
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "grade_id")
     private Grade grade;
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "warehouse_id")
+    private Warehouse warehouse;
 
     @Column(name = "enabled", nullable = false)
     private Boolean enabled = true;
@@ -57,6 +67,9 @@ public class User implements UserDetails {
 
     @Column(name = "last_password_change_at")
     private LocalDateTime lastPasswordChangeAt;
+
+    @Column(name = "last_login")
+    private LocalDateTime lastLogin;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -125,11 +138,38 @@ public class User implements UserDetails {
     }
 
     public String getName() {
+        if (name == null && (firstName != null || lastName != null)) {
+            return (firstName != null ? firstName : "") + (lastName != null ? " " + lastName : "");
+        }
         return name;
     }
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getFirstName() {
+        return firstName;
+    }
+
+    public void setFirstName(String firstName) {
+        this.firstName = firstName;
+    }
+
+    public String getLastName() {
+        return lastName;
+    }
+
+    public void setLastName(String lastName) {
+        this.lastName = lastName;
+    }
+
+    public Warehouse getWarehouse() {
+        return warehouse;
+    }
+
+    public void setWarehouse(Warehouse warehouse) {
+        this.warehouse = warehouse;
     }
 
     public String getPosition() {
@@ -178,6 +218,14 @@ public class User implements UserDetails {
 
     public void setLastPasswordChangeAt(LocalDateTime lastPasswordChangeAt) {
         this.lastPasswordChangeAt = lastPasswordChangeAt;
+    }
+
+    public LocalDateTime getLastLogin() {
+        return lastLogin;
+    }
+
+    public void setLastLogin(LocalDateTime lastLogin) {
+        this.lastLogin = lastLogin;
     }
 
     public LocalDateTime getCreatedAt() {

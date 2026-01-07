@@ -26,18 +26,23 @@ public class WarehouseService {
 
     @Transactional
     public Warehouse createWarehouse(CreateWarehouseRequest request) {
-        if (request.getWarehouseCode() != null && !request.getWarehouseCode().isBlank()) {
-            Optional<Warehouse> existing = warehouseRepository.findByWarehouseCode(request.getWarehouseCode());
+        String code = request.getWarehouseCode();
+        if (code != null && !code.isBlank()) {
+            Optional<Warehouse> existing = warehouseRepository.findByWarehouseCode(code);
             if (existing.isPresent()) {
                 throw new IllegalArgumentException("Warehouse code already exists");
             }
+        } else {
+            code = null; // Ensure blank becomes null to avoid unique constraint violation
         }
+        
         Warehouse warehouse = new Warehouse();
         warehouse.setName(request.getName());
         warehouse.setAddress(request.getAddress());
         warehouse.setCapacityUnits(request.getCapacityUnits());
         warehouse.setStatus(WarehouseStatus.ACTIVE);
-        warehouse.setWarehouseCode(request.getWarehouseCode());
+        warehouse.setWarehouseCode(code);
+        warehouse.setIsActive(true); // Ensure it's active by default
         return warehouseRepository.save(warehouse);
     }
     

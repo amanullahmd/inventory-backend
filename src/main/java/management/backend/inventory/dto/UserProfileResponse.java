@@ -13,13 +13,17 @@ public class UserProfileResponse {
     
     private Long id;
     private String name;
+    private String firstName;
+    private String lastName;
     private String email;
     private String branchName;
+    private Long warehouseId;
     private String position;
     private Long gradeId;
     private Integer gradeNumber;
     private String gradeDescription;
     private List<String> roles;
+    private LocalDateTime lastLogin;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     
@@ -29,8 +33,16 @@ public class UserProfileResponse {
     public UserProfileResponse(User user) {
         this.id = user.getId();
         this.name = user.getName();
+        this.firstName = user.getFirstName();
+        this.lastName = user.getLastName();
         this.email = user.getEmail();
-        this.branchName = null; // Branch name no longer exists in User entity
+        if (user.getWarehouse() != null) {
+            this.branchName = user.getWarehouse().getName();
+            this.warehouseId = user.getWarehouse().getWarehouseId();
+        } else {
+            this.branchName = null;
+            this.warehouseId = null;
+        }
         this.position = user.getPosition();
         if (user.getGrade() != null) {
             this.gradeId = user.getGrade().getId();
@@ -38,6 +50,7 @@ public class UserProfileResponse {
             this.gradeDescription = user.getGrade().getDescription();
         }
         this.roles = List.of(user.getRole().getAuthority());
+        this.lastLogin = user.getLastLogin();
         this.createdAt = user.getCreatedAt();
         this.updatedAt = user.getUpdatedAt();
     }
@@ -58,6 +71,22 @@ public class UserProfileResponse {
     public void setName(String name) {
         this.name = name;
     }
+
+    public String getFirstName() {
+        return firstName;
+    }
+
+    public void setFirstName(String firstName) {
+        this.firstName = firstName;
+    }
+
+    public String getLastName() {
+        return lastName;
+    }
+
+    public void setLastName(String lastName) {
+        this.lastName = lastName;
+    }
     
     public String getEmail() {
         return email;
@@ -73,6 +102,14 @@ public class UserProfileResponse {
     
     public void setBranchName(String branchName) {
         this.branchName = branchName;
+    }
+
+    public Long getWarehouseId() {
+        return warehouseId;
+    }
+
+    public void setWarehouseId(Long warehouseId) {
+        this.warehouseId = warehouseId;
     }
 
     public String getPosition() {
@@ -115,6 +152,14 @@ public class UserProfileResponse {
         this.roles = roles;
     }
     
+    public LocalDateTime getLastLogin() {
+        return lastLogin;
+    }
+
+    public void setLastLogin(LocalDateTime lastLogin) {
+        this.lastLogin = lastLogin;
+    }
+
     public LocalDateTime getCreatedAt() {
         return createdAt;
     }

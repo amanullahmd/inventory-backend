@@ -7,6 +7,8 @@ import management.backend.inventory.entity.User;
 import management.backend.inventory.entity.UserRoleEnum;
 import management.backend.inventory.repository.GradeRepository;
 import management.backend.inventory.repository.UserRepository;
+import management.backend.inventory.repository.WarehouseRepository;
+import management.backend.inventory.dto.UserUpdateRequest;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,6 +23,7 @@ public class NativeUserService {
 
     private final UserRepository userRepository;
     private final GradeRepository gradeRepository;
+    private final WarehouseRepository warehouseRepository;
 
     @Transactional
     public User createUser(User user) {
@@ -66,6 +69,59 @@ public class NativeUserService {
 
     public boolean isUser(Long userId) {
         return getUserRole(userId).isUser();
+    }
+
+    @Transactional
+    public UserProfileResponse updateUser(Long userId, UserUpdateRequest request) {
+        if (userId == null) {
+            throw new IllegalArgumentException("User ID cannot be null");
+        }
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        // Validate email uniqueness if email is being changed
+        if (!user.getEmail().equals(request.getEmail())) {
+            validateEmailUniqueness(request.getEmail(), userId);
+        }
+
+        // Update fields
+        user.setEmail(request.getEmail());
+        user.setFirstName(request.getFirstName());
+        user.setLastName(request.getLastName());
+        user.setName(request.getFirstName() + " " + request.getLastName()); // Backward compatibility
+        user.setPosition(request.getPosition());
+
+        if (request.getEnabled() != null) {
+            user.setEnabled(request.getEnabled());
+        }
+
+        if (request.getRole() != null) {
+            try {
+                String roleStr = request.getRole().toUpperCase();
+                if ("ADMINISTRATOR".equals(roleStr)) roleStr = "ADMIN";
+                if ("STANDARD USER".equals(roleStr)) roleStr = "USER";
+                user.setRole(UserRoleEnum.valueOf(roleStr));
+            } catch (IllegalArgumentException e) {
+                // Ignore invalid role or handle error
+            }
+        }
+
+        if (request.getGradeId() != null) {
+            gradeRepository.findById(request.getGradeId())
+                    .ifPresent(user::setGrade);
+        } else {
+            user.setGrade(null);
+        }
+
+        if (request.getWarehouseId() != null) {
+            warehouseRepository.findById(request.getWarehouseId())
+                    .ifPresent(user::setWarehouse);
+        } else {
+            user.setWarehouse(null);
+        }
+
+        User updatedUser = userRepository.save(user);
+        return new UserProfileResponse(updatedUser);
     }
 
     @Transactional

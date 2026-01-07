@@ -16,6 +16,8 @@ import management.backend.inventory.util.PasswordValidator;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,6 +25,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+
+import management.backend.inventory.repository.WarehouseRepository;
 
 @Service
 @RequiredArgsConstructor
@@ -32,6 +36,7 @@ public class AuthService {
 
     private final UserRepository userRepository;
     private final GradeRepository gradeRepository;
+    private final WarehouseRepository warehouseRepository;
     private final JwtTokenProvider jwtTokenProvider;
     private final PasswordEncoder passwordEncoder;
     private final PasswordValidator passwordValidator;
@@ -51,16 +56,64 @@ public class AuthService {
         user.setEmail(request.getEmail());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setUsername(request.getEmail());
-        user.setName(request.getName() != null ? request.getName() : "");
+        user.setFirstName(request.getFirstName());
+        user.setLastName(request.getLastName());
+        user.setPosition(request.getPosition());
+        
+        // Backward compatibility for 'name' field
+        if (request.getName() != null && !request.getName().isEmpty()) {
+            user.setName(request.getName());
+        } else {
+            user.setName((request.getFirstName() != null ? request.getFirstName() : "") + 
+                         (request.getLastName() != null ? " " + request.getLastName() : ""));
+        }
+        
         user.setEnabled(true);
         user.setPasswordChangeRequired(false);
         user.setTemporaryPassword(false);
         user.setLastPasswordChangeAt(LocalDateTime.now());
-        user.setRole(UserRoleEnum.USER);
+        
+        // Set Role
+        if (request.getRole() != null) {
+            try {
+                // If the input is "Admin", convert to "ADMIN", etc.
+                String roleStr = request.getRole().toUpperCase();
+                if ("ADMINISTRATOR".equals(roleStr)) roleStr = "ADMIN";
+                if ("STANDARD USER".equals(roleStr)) roleStr = "USER";
+                
+                UserRoleEnum role = UserRoleEnum.valueOf(roleStr);
+
+                // Security check: Only admins can create admin accounts
+                if (role == UserRoleEnum.ADMIN) {
+                    Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+                    boolean isAdmin = auth != null && auth.getAuthorities().stream()
+                            .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+                    
+                    if (!isAdmin) {
+                        // Allow creation of the first user as Admin if the database is empty
+                        if (userRepository.count() > 0) {
+                            throw new ValidationException("Only administrators can create admin accounts");
+                        }
+                    }
+                }
+
+                user.setRole(role);
+            } catch (IllegalArgumentException e) {
+                // Fallback or default
+                user.setRole(UserRoleEnum.USER);
+            }
+        } else {
+            user.setRole(UserRoleEnum.USER);
+        }
 
         if (request.getGradeId() != null) {
             gradeRepository.findById(request.getGradeId())
                     .ifPresent(user::setGrade);
+        }
+        
+        if (request.getWarehouseId() != null) {
+            warehouseRepository.findById(request.getWarehouseId())
+                    .ifPresent(user::setWarehouse);
         }
 
         user = userRepository.save(user);
@@ -78,6 +131,9 @@ public class AuthService {
         }
 
         User user = userOpt.get();
+        user.setLastLogin(LocalDateTime.now());
+        userRepository.save(user);
+
         String accessToken = jwtTokenProvider.generateAccessToken(user);
         String refreshToken = jwtTokenProvider.generateRefreshToken(user);
 
