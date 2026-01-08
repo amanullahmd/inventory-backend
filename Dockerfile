@@ -25,16 +25,17 @@ COPY --from=builder /build/target/backend.inventory-*.jar app.jar
 # Create non-root user for security
 RUN addgroup -g 1000 appuser && \
     adduser -D -u 1000 -G appuser appuser && \
-    chown -R appuser:appuser /app
+    chown -R appuser:appuser /app && \
+    apk add --no-cache netcat-openbsd
 
 USER appuser
 
 # Expose port
-EXPOSE 8081
+EXPOSE 8080
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-    CMD wget --no-verbose --tries=1 --spider http://localhost:8081/api/actuator/health || exit 1
+    CMD wget --no-verbose --tries=1 --spider http://localhost:8080/api/actuator/health || exit 1
 
-# Run the application with Railway profile
-ENTRYPOINT ["java", "-Dspring.profiles.active=railway", "-jar", "app.jar"]
+# Run the application with Railway profile and wait for DB
+ENTRYPOINT ["/bin/sh", "-c", "echo 'Waiting for database...' && while ! nc -z $PGHOST $PGPORT; do sleep 1; done && echo 'Database is up!' && java -Dspring.profiles.active=railway -jar app.jar"]
