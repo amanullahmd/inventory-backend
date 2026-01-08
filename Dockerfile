@@ -38,4 +38,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
     CMD wget --no-verbose --tries=1 --spider http://localhost:8080/api/actuator/health || exit 1
 
 # Run the application with Railway profile and wait for DB
-ENTRYPOINT ["/bin/sh", "-c", "echo \"Connecting to database at $PGHOST:${PGPORT:-5432}\" && while ! nc -z $PGHOST ${PGPORT:-5432}; do sleep 1; done && echo 'Database is up!' && java -Dspring.profiles.active=railway -jar app.jar"]
+ENTRYPOINT ["/bin/sh", "-c", "if [ -z \"$PGHOST\" ]; then if [ -n \"$RAILWAY_PRIVATE_DOMAIN\" ]; then export PGHOST=$RAILWAY_PRIVATE_DOMAIN; elif [ -n \"$DATABASE_URL\" ]; then clean_url=${DATABASE_URL#*@}; export PGHOST=${clean_url%%:*}; clean_port=${clean_url#*:}; export PGPORT=${clean_port%%/*}; fi; fi; if [ -n \"$PGHOST\" ]; then echo \"Connecting to database at $PGHOST:${PGPORT:-5432}\"; while ! nc -z $PGHOST ${PGPORT:-5432}; do sleep 1; done; echo 'Database is up!'; else echo 'WARNING: PGHOST is empty. Skipping DB readiness check.'; fi; java -Dspring.profiles.active=railway -jar app.jar"]
