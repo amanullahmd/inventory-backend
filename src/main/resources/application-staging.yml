@@ -13,6 +13,8 @@ spring:
     username: ${PGUSER:postgres}
     password: ${PGPASSWORD:postgres}
     driver-class-name: org.postgresql.Driver
+    # Railway provides DATABASE_URL as complete JDBC URL
+    # Falls back to localhost for local development
     hikari:
       maximum-pool-size: 10
       minimum-idle: 2
