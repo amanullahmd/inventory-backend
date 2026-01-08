@@ -201,7 +201,26 @@ docker run -p 8081:8081 inventory-backend:latest
 ### Deploy to Railway
 
 1. Connect your GitHub repository to Railway
-2. Set environment variables in Railway dashboard
+2. **CRITICAL**: Configure Environment Variables in Railway Dashboard
+   - Railway Postgres Plugin usually sets `DATABASE_URL` and `PG*` variables automatically.
+   - If they are missing, you MUST set them manually or link the database service.
+   - **Required Variables**:
+     ```
+     PGHOST=your-database-host
+     PGPORT=your-database-port
+     PGDATABASE=your-database-name
+     PGUSER=your-database-user
+     PGPASSWORD=your-database-password
+     JWT_SECRET=your-strong-secret-key
+     CORS_ALLOWED_ORIGINS=https://your-frontend-domain.com
+     SPRING_PROFILES_ACTIVE=railway
+     ```
+   - **Alternative**: If you only have `DATABASE_URL` (format `postgresql://...`), you can set:
+     ```
+     SPRING_DATASOURCE_URL=${DATABASE_URL}
+     ```
+     *Note: This might require fixing JDBC URL format in some drivers.*
+
 3. Railway automatically builds and deploys on push
 
 See [RAILWAY_DEPLOYMENT_GUIDE.md](../RAILWAY_DEPLOYMENT_GUIDE.md) for detailed instructions.
@@ -299,8 +318,12 @@ curl http://localhost:8081/api/actuator/metrics
 
 ### Database Connection Issues
 ```
-Error: Connection refused
-Solution: Verify PGHOST, PGPORT, PGUSER, PGPASSWORD environment variables
+Error: Connection refused (localhost:5432)
+Cause: The application is trying to connect to localhost instead of the Railway database.
+Solution:
+1. Ensure `SPRING_PROFILES_ACTIVE=railway` is set.
+2. Ensure `PGHOST`, `PGPORT`, etc. are set in Railway Variables.
+3. If using `DATABASE_URL`, map it to `SPRING_DATASOURCE_URL` or ensure individual PG* vars are present.
 ```
 
 ### Flyway Migration Errors
