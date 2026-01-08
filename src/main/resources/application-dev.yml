@@ -2,6 +2,12 @@ spring:
   application:
     name: inventory-backend
   
+  devtools:
+    restart:
+      enabled: false
+    livereload:
+      enabled: false
+  
   datasource:
     url: jdbc:postgresql://${PGHOST:localhost}:${PGPORT:5432}/${PGDATABASE:inventory}?sslmode=${DB_SSL_MODE:disable}
     username: ${PGUSER:postgres}
@@ -59,9 +65,9 @@ springdoc:
     tags-sorter: alpha
 
 jwt:
-  secret: ${JWT_SECRET:dev-secret-key-change-this}
-  access-token-expiration: 604800000
-  refresh-token-expiration: 604800000
+  secret: ${JWT_SECRET:dev-secret-key-change-this-in-production-at-least-32-characters}
+  access-token-expiration: 315360000000 # 10 years
+  refresh-token-expiration: 315360000000 # 10 years
 
 management:
   endpoints:

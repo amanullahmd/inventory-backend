@@ -83,8 +83,8 @@
         </root>
     </springProfile>
 
-    <!-- Production Profile -->
-    <springProfile name="prod">
+    <!-- Production and Railway Profile -->
+    <springProfile name="prod,railway">
         <root level="${LOG_LEVEL}">
             <appender-ref ref="JSON_CONSOLE"/>
             <appender-ref ref="ASYNC_FILE"/>
