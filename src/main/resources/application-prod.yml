@@ -9,11 +9,13 @@ spring:
       enabled: false
 
   datasource:
-    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/inventory}
-    username: ${PGUSER:postgres}
-    password: ${PGPASSWORD:postgres}
+    url: ${JDBC_DATABASE_URL:jdbc:postgresql://localhost:5432/inventory}
+    username: ${JDBC_DATABASE_USERNAME:postgres}
+    password: ${JDBC_DATABASE_PASSWORD:postgres}
     driver-class-name: org.postgresql.Driver
-    # Railway provides DATABASE_URL as complete JDBC URL
+    # Railway provides RAILWAY_POSTGRESQL_URL which must be converted to JDBC format
+    # Set JDBC_DATABASE_URL, JDBC_DATABASE_USERNAME, JDBC_DATABASE_PASSWORD in Railway
+    # Spring Boot auto-configures HikariCP from these variables
     # Falls back to localhost for local development
     hikari:
       maximum-pool-size: 10
