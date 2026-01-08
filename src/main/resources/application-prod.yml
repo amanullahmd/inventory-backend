@@ -1,15 +1,18 @@
 spring:
   application:
     name: inventory-backend
-  
+
   devtools:
     restart:
       enabled: false
     livereload:
       enabled: false
-  
+
   datasource:
-    url: ${JDBC_DATABASE_URL}
+    url: ${SPRING_DATASOURCE_URL}        # JDBC URL (must start with jdbc:postgresql://)
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+    driver-class-name: org.postgresql.Driver
     hikari:
       maximum-pool-size: 20
       minimum-idle: 5
@@ -18,7 +21,7 @@ spring:
       max-lifetime: 900000
       auto-commit: true
       connection-test-query: SELECT 1
-  
+
   jpa:
     hibernate:
       ddl-auto: validate
@@ -31,7 +34,7 @@ spring:
           batch_size: 50
         generate_statistics: false
         dialect: org.hibernate.dialect.PostgreSQLDialect
-  
+
   flyway:
     enabled: true
     locations: classpath:db/migration
@@ -64,6 +67,8 @@ logging:
     management.backend.inventory: INFO
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: ""  # Disable file logging for Railway (logs to stdout)
 
 springdoc:
   api-docs:

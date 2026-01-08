@@ -171,17 +171,17 @@ Set these variables in Railway Dashboard (Backend Service):
 |----------|----------------|-------------|
 | `SPRING_PROFILES_ACTIVE` | `prod` | Activates production profile |
 | `PORT` | `8080` | Server port |
-| `JDBC_DATABASE_URL` | `jdbc:postgresql://${PGHOST}:${PGPORT}/${PGDATABASE}` | **REQUIRED** - Connection string |
+| `SPRING_DATASOURCE_URL` | `jdbc:postgresql://${PGHOST}:${PGPORT}/${PGDATABASE}` | **REQUIRED** - JDBC Connection string |
+| `SPRING_DATASOURCE_USERNAME` | `${{shared.PGUSER}}` | Railway Postgres User |
+| `SPRING_DATASOURCE_PASSWORD` | `${{shared.PGPASSWORD}}` | Railway Postgres Password |
 | `PGHOST` | `${{shared.PGHOST}}` | Railway Postgres Host |
 | `PGPORT` | `5432` | Railway Postgres Port |
 | `PGDATABASE` | `${{shared.PGDATABASE}}` | Railway Postgres DB Name |
-| `PGUSER` | `${{shared.PGUSER}}` | Railway Postgres User |
-| `PGPASSWORD` | `${{shared.PGPASSWORD}}` | Railway Postgres Password |
 | `JWT_SECRET` | `(your-strong-secret)` | Min 32 chars |
 | `CORS_ALLOWED_ORIGINS` | `https://your-frontend.railway.app` | Allowed frontend URL |
 | `JAVA_OPTS` | `-Xms128m -Xmx512m` | JVM Memory settings |
 
-**DO NOT set `DATABASE_URL` manually in Backend variables (Railway sets it automatically but we use JDBC_DATABASE_URL to be safe).**
+**DO NOT set `DATABASE_URL` manually in Backend variables. Use `SPRING_DATASOURCE_URL` constructed as above.**
 
 ### Database Migrations
 
