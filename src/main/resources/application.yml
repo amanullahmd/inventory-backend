@@ -76,7 +76,7 @@ springdoc:
     enabled: false
 
 jwt:
-  secret: ${JWT_SECRET:VQ37YPpGuOjLQhfmcFcyQCpmmXQrFp42MBP1MtnrTOU=}
+  secret: ${JWT_SECRET:your-secret-key-change-this-in-production-at-least-32-characters}
   access-token-expiration: 315360000000 # 10 years
   refresh-token-expiration: 315360000000 # 10 years
 
