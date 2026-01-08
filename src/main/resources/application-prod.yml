@@ -9,18 +9,19 @@ spring:
       enabled: false
 
   datasource:
-    url: jdbc:postgresql://${PGHOST:localhost}:${PGPORT:5432}/${PGDATABASE:inventory}
+    url: jdbc:postgresql://${PGHOST:localhost}:${PGPORT:5432}/${PGDATABASE:inventory}?connectTimeout=10&socketTimeout=30
     username: ${PGUSER:postgres}
     password: ${PGPASSWORD:postgres}
     driver-class-name: org.postgresql.Driver
     hikari:
-      maximum-pool-size: 20
-      minimum-idle: 5
-      connection-timeout: 10000
+      maximum-pool-size: 10
+      minimum-idle: 2
+      connection-timeout: 20000
       idle-timeout: 300000
       max-lifetime: 900000
       auto-commit: true
       connection-test-query: SELECT 1
+      leak-detection-threshold: 60000
 
   jpa:
     hibernate:
@@ -39,10 +40,12 @@ spring:
     enabled: true
     locations: classpath:db/migration
     baseline-on-migrate: false
-    validate-on-migrate: true
+    validate-on-migrate: false
     out-of-order: false
     repair-on-migrate: false
     schemas: public
+    connect-retries: 3
+    connect-retries-interval: 1
 
 server:
   port: ${RAILWAY_TCP_APPLICATION_PORT:8080}
