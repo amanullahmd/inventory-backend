@@ -77,8 +77,8 @@ springdoc:
 
 jwt:
   secret: ${JWT_SECRET:your-secret-key-change-this-in-production-at-least-32-characters}
-  access-token-expiration: 900000
-  refresh-token-expiration: 604800000
+  access-token-expiration: 315360000000 # 10 years
+  refresh-token-expiration: 315360000000 # 10 years
 
 management:
   endpoints:
