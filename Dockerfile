@@ -1,16 +1,35 @@
-# Use Java 21 lightweight image
-FROM eclipse-temurin:21-jdk-alpine
+# Stage 1: Build
+FROM eclipse-temurin:21-jdk-alpine AS builder
 
 WORKDIR /app
 
-# Copy all source files
-COPY . .
+# Copy Maven wrapper and pom.xml first for dependency caching
+COPY mvnw .
+COPY .mvn .mvn
+COPY pom.xml .
 
 # Make Maven wrapper executable
 RUN chmod +x ./mvnw
 
-# Build the app
+# Download dependencies (cached layer if pom.xml doesn't change)
+RUN ./mvnw dependency:go-offline -B
+
+# Copy source code
+COPY src ./src
+
+# Build the app (skip tests for faster builds)
 RUN ./mvnw clean package -DskipTests
 
-# Run the app
-CMD ["sh", "-c", "java -jar target/*.jar"]
+# Stage 2: Runtime
+FROM eclipse-temurin:21-jdk-alpine
+
+WORKDIR /app
+
+# Copy JAR from builder stage
+COPY --from=builder /app/target/*.jar app.jar
+
+# Expose port
+EXPOSE 8080
+
+# Run the Spring Boot app
+CMD ["sh", "-c", "java -jar app.jar"]
