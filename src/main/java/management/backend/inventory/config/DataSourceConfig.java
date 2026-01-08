@@ -3,7 +3,7 @@ package management.backend.inventory.config;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -13,11 +13,37 @@ import javax.sql.DataSource;
  * DataSource Configuration
  * 
  * Configures HikariCP connection pool for PostgreSQL database.
- * Optimized for Railway deployment with proper timeout and pool settings.
+ * Reads Railway PostgreSQL environment variables for production deployment.
+ * Falls back to localhost for local development.
  */
 @Slf4j
 @Configuration
 public class DataSourceConfig {
+
+    // Railway provides RAILWAY_POSTGRESQL_URL as complete JDBC URL
+    @Value("${RAILWAY_POSTGRESQL_URL:jdbc:postgresql://localhost:5432/inventory}")
+    private String jdbcUrl;
+
+    @Value("${RAILWAY_POSTGRESQL_USER:postgres}")
+    private String username;
+
+    @Value("${RAILWAY_POSTGRESQL_PASSWORD:postgres}")
+    private String password;
+
+    @Value("${spring.datasource.hikari.maximum-pool-size:10}")
+    private int maxPoolSize;
+
+    @Value("${spring.datasource.hikari.minimum-idle:2}")
+    private int minIdle;
+
+    @Value("${spring.datasource.hikari.connection-timeout:30000}")
+    private long connectionTimeout;
+
+    @Value("${spring.datasource.hikari.idle-timeout:600000}")
+    private long idleTimeout;
+
+    @Value("${spring.datasource.hikari.max-lifetime:1800000}")
+    private long maxLifetime;
 
     /**
      * Configure HikariCP DataSource
@@ -28,47 +54,16 @@ public class DataSourceConfig {
     public DataSource dataSource() {
         HikariConfig config = new HikariConfig();
         
-        // Get Railway PostgreSQL environment variables
-        String host = System.getenv("RAILWAY_POSTGRESQL_HOST");
-        String port = System.getenv("RAILWAY_POSTGRESQL_PORT");
-        String database = System.getenv("RAILWAY_POSTGRESQL_DATABASE");
-        String username = System.getenv("RAILWAY_POSTGRESQL_USER");
-        String password = System.getenv("RAILWAY_POSTGRESQL_PASSWORD");
-        
-        // Use defaults for local development if Railway vars not set
-        if (host == null || host.isEmpty()) {
-            host = "localhost";
-            log.warn("RAILWAY_POSTGRESQL_HOST not set, using default: {}", host);
-        }
-        if (port == null || port.isEmpty()) {
-            port = "5432";
-            log.warn("RAILWAY_POSTGRESQL_PORT not set, using default: {}", port);
-        }
-        if (database == null || database.isEmpty()) {
-            database = "inventory";
-            log.warn("RAILWAY_POSTGRESQL_DATABASE not set, using default: {}", database);
-        }
-        if (username == null || username.isEmpty()) {
-            username = "user";
-            log.warn("RAILWAY_POSTGRESQL_USER not set, using default: {}", username);
-        }
-        if (password == null || password.isEmpty()) {
-            password = "password";
-            log.warn("RAILWAY_POSTGRESQL_PASSWORD not set, using default");
-        }
-        
-        // Construct JDBC URL from Railway environment variables
-        String jdbcUrl = String.format("jdbc:postgresql://%s:%s/%s", host, port, database);
         config.setJdbcUrl(jdbcUrl);
         config.setUsername(username);
         config.setPassword(password);
         
         // Connection pool settings
-        config.setMaximumPoolSize(10);
-        config.setMinimumIdle(2);
-        config.setConnectionTimeout(30000);      // 30 seconds
-        config.setIdleTimeout(600000);           // 10 minutes
-        config.setMaxLifetime(1800000);          // 30 minutes
+        config.setMaximumPoolSize(maxPoolSize);
+        config.setMinimumIdle(minIdle);
+        config.setConnectionTimeout(connectionTimeout);
+        config.setIdleTimeout(idleTimeout);
+        config.setMaxLifetime(maxLifetime);
         config.setAutoCommit(true);
         config.setLeakDetectionThreshold(60000); // 1 minute
         
@@ -83,15 +78,12 @@ public class DataSourceConfig {
         
         log.info("Configuring HikariCP DataSource");
         log.info("  JDBC URL: {}", jdbcUrl);
-        log.info("  Host: {}", host);
-        log.info("  Port: {}", port);
-        log.info("  Database: {}", database);
         log.info("  Username: {}", username);
-        log.info("  Max Pool Size: {}", config.getMaximumPoolSize());
-        log.info("  Min Idle: {}", config.getMinimumIdle());
-        log.info("  Connection Timeout: {} ms", config.getConnectionTimeout());
-        log.info("  Idle Timeout: {} ms", config.getIdleTimeout());
-        log.info("  Max Lifetime: {} ms", config.getMaxLifetime());
+        log.info("  Max Pool Size: {}", maxPoolSize);
+        log.info("  Min Idle: {}", minIdle);
+        log.info("  Connection Timeout: {} ms", connectionTimeout);
+        log.info("  Idle Timeout: {} ms", idleTimeout);
+        log.info("  Max Lifetime: {} ms", maxLifetime);
         
         try {
             HikariDataSource dataSource = new HikariDataSource(config);
