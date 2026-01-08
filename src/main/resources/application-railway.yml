@@ -9,7 +9,7 @@ spring:
       enabled: false
 
   datasource:
-    url: jdbc:postgresql://${PGHOST:localhost}:${PGPORT:5432}/${PGDATABASE:inventory}?connectTimeout=10&socketTimeout=30
+    url: jdbc:postgresql://${RAILWAY_PRIVATE_DOMAIN:localhost}:5432/${PGDATABASE:inventory}?connectTimeout=10&socketTimeout=30
     username: ${PGUSER:postgres}
     password: ${PGPASSWORD:postgres}
     driver-class-name: org.postgresql.Driver
@@ -46,6 +46,7 @@ spring:
     schemas: public
     connect-retries: 3
     connect-retries-interval: 1
+    connect-timeout: 10
 
 server:
   port: ${RAILWAY_TCP_APPLICATION_PORT:8080}
@@ -55,6 +56,7 @@ server:
     enabled: true
     min-response-size: 1024
   shutdown: graceful
+  shutdown-wait-time: 30s
   tomcat:
     threads:
       max: 200
@@ -102,6 +104,8 @@ management:
     livenessState:
       enabled: true
     readinessState:
+      enabled: true
+    startupState:
       enabled: true
   metrics:
     export:
