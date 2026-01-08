@@ -1,15 +1,16 @@
-# Use the Eclipse temurin alpine official image
-# https://hub.docker.com/_/eclipse-temurin
+# Use Java 21 lightweight image
 FROM eclipse-temurin:21-jdk-alpine
 
-# Create and change to the app directory
 WORKDIR /app
 
-# Copy local code to the container image
-COPY . ./
+# Copy all source files
+COPY . .
+
+# Make Maven wrapper executable
+RUN chmod +x ./mvnw
 
 # Build the app
 RUN ./mvnw clean package -DskipTests
 
-# Run the app by dynamically finding the JAR file in the target directory
+# Run the app
 CMD ["sh", "-c", "java -jar target/*.jar"]
