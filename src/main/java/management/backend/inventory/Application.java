@@ -11,7 +11,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 @SpringBootApplication
-@RequiredArgsConstructor
 public class Application {
 
 	public static void main(String[] args) {
