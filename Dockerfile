@@ -1,18 +1,15 @@
-# ---------- Build Stage ----------
-FROM maven:3.9.6-eclipse-temurin-21 AS build
-WORKDIR /app
-COPY pom.xml .
-RUN mvn -B -q dependency:go-offline
-COPY src ./src
-RUN mvn -B -q clean package -DskipTests
+# Use the Eclipse temurin alpine official image
+# https://hub.docker.com/_/eclipse-temurin
+FROM eclipse-temurin:21-jdk-alpine
 
-# ---------- Runtime Stage ----------
-FROM eclipse-temurin:21-jre
+# Create and change to the app directory
 WORKDIR /app
 
-ENV JAVA_OPTS="-Xms128m -Xmx512m"
+# Copy local code to the container image
+COPY . ./
 
-COPY --from=build /app/target/*jar app.jar
+# Build the app
+RUN ./mvnw clean package -DskipTests
 
-EXPOSE 8080
-ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]
+# Run the app by dynamically finding the JAR file in the target directory
+CMD ["sh", "-c", "java -jar target/*.jar"]
