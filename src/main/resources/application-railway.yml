@@ -45,7 +45,7 @@ spring:
     schemas: public
 
 server:
-  port: ${PORT:8081}
+  port: ${PORT:8080}
   servlet:
     context-path: /api
   compression:
@@ -106,7 +106,7 @@ management:
 
 app:
   cors:
-    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000}
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:https://inventory-frontend-production-3d3d.up.railway.app}
   security:
     jwt-secret-min-length: 32
 
