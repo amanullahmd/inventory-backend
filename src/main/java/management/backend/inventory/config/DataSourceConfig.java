@@ -28,27 +28,39 @@ public class DataSourceConfig {
     public DataSource dataSource() {
         HikariConfig config = new HikariConfig();
         
-        // Get JDBC URL from environment or use default
-        String jdbcUrl = System.getenv("JDBC_DATABASE_URL");
-        if (jdbcUrl == null || jdbcUrl.isEmpty()) {
-            jdbcUrl = "jdbc:postgresql://localhost:5432/inventory";
-            log.warn("JDBC_DATABASE_URL not set, using default: {}", jdbcUrl);
-        }
-        config.setJdbcUrl(jdbcUrl);
+        // Get Railway PostgreSQL environment variables
+        String host = System.getenv("RAILWAY_POSTGRESQL_HOST");
+        String port = System.getenv("RAILWAY_POSTGRESQL_PORT");
+        String database = System.getenv("RAILWAY_POSTGRESQL_DATABASE");
+        String username = System.getenv("RAILWAY_POSTGRESQL_USER");
+        String password = System.getenv("RAILWAY_POSTGRESQL_PASSWORD");
         
-        // Get credentials from environment or use defaults
-        String username = System.getenv("PGUSER");
+        // Use defaults for local development if Railway vars not set
+        if (host == null || host.isEmpty()) {
+            host = "localhost";
+            log.warn("RAILWAY_POSTGRESQL_HOST not set, using default: {}", host);
+        }
+        if (port == null || port.isEmpty()) {
+            port = "5432";
+            log.warn("RAILWAY_POSTGRESQL_PORT not set, using default: {}", port);
+        }
+        if (database == null || database.isEmpty()) {
+            database = "inventory";
+            log.warn("RAILWAY_POSTGRESQL_DATABASE not set, using default: {}", database);
+        }
         if (username == null || username.isEmpty()) {
             username = "user";
-            log.warn("PGUSER not set, using default: {}", username);
+            log.warn("RAILWAY_POSTGRESQL_USER not set, using default: {}", username);
         }
-        config.setUsername(username);
-        
-        String password = System.getenv("PGPASSWORD");
         if (password == null || password.isEmpty()) {
             password = "password";
-            log.warn("PGPASSWORD not set, using default");
+            log.warn("RAILWAY_POSTGRESQL_PASSWORD not set, using default");
         }
+        
+        // Construct JDBC URL from Railway environment variables
+        String jdbcUrl = String.format("jdbc:postgresql://%s:%s/%s", host, port, database);
+        config.setJdbcUrl(jdbcUrl);
+        config.setUsername(username);
         config.setPassword(password);
         
         // Connection pool settings
@@ -71,6 +83,9 @@ public class DataSourceConfig {
         
         log.info("Configuring HikariCP DataSource");
         log.info("  JDBC URL: {}", jdbcUrl);
+        log.info("  Host: {}", host);
+        log.info("  Port: {}", port);
+        log.info("  Database: {}", database);
         log.info("  Username: {}", username);
         log.info("  Max Pool Size: {}", config.getMaximumPoolSize());
         log.info("  Min Idle: {}", config.getMinimumIdle());

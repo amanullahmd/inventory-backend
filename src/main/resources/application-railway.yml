@@ -1,8 +1,8 @@
 spring:
   datasource:
-    url: ${JDBC_DATABASE_URL:jdbc:postgresql://localhost:5432/inventory}
-    username: ${PGUSER:user}
-    password: ${PGPASSWORD:password}
+    url: jdbc:postgresql://${RAILWAY_POSTGRESQL_HOST:localhost}:${RAILWAY_POSTGRESQL_PORT:5432}/${RAILWAY_POSTGRESQL_DATABASE:inventory}
+    username: ${RAILWAY_POSTGRESQL_USER:user}
+    password: ${RAILWAY_POSTGRESQL_PASSWORD:password}
     driver-class-name: org.postgresql.Driver
     hikari:
       maximum-pool-size: 10
