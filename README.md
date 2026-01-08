@@ -160,68 +160,47 @@ backend.inventory/
 **Development** (application-dev.yml):
 ```yaml
 spring.profiles.active: dev
-spring.datasource.url: jdbc:h2:mem:testdb
+JDBC_DATABASE_URL: jdbc:postgresql://your-remote-db-host:port/db
+CORS_ALLOWED_ORIGINS: http://localhost:3000
 ```
 
-**Production** (application-prod.yml):
-```yaml
-PGHOST=your-database-host
-PGPORT=5432
-PGDATABASE=railway
-PGUSER=postgres
-PGPASSWORD=your-password
-JWT_SECRET=your-secret-key-min-32-chars
-CORS_ALLOWED_ORIGINS=https://your-frontend-domain.com
-SPRING_PROFILES_ACTIVE=prod
-```
+**Production (Railway)**:
+Set these variables in Railway Dashboard (Backend Service):
+
+| Variable | Value (Example) | Description |
+|----------|----------------|-------------|
+| `SPRING_PROFILES_ACTIVE` | `prod` | Activates production profile |
+| `PORT` | `8080` | Server port |
+| `JDBC_DATABASE_URL` | `jdbc:postgresql://${PGHOST}:${PGPORT}/${PGDATABASE}` | **REQUIRED** - Connection string |
+| `PGHOST` | `${{shared.PGHOST}}` | Railway Postgres Host |
+| `PGPORT` | `5432` | Railway Postgres Port |
+| `PGDATABASE` | `${{shared.PGDATABASE}}` | Railway Postgres DB Name |
+| `PGUSER` | `${{shared.PGUSER}}` | Railway Postgres User |
+| `PGPASSWORD` | `${{shared.PGPASSWORD}}` | Railway Postgres Password |
+| `JWT_SECRET` | `(your-strong-secret)` | Min 32 chars |
+| `CORS_ALLOWED_ORIGINS` | `https://your-frontend.railway.app` | Allowed frontend URL |
+| `JAVA_OPTS` | `-Xms128m -Xmx512m` | JVM Memory settings |
+
+**DO NOT set `DATABASE_URL` manually in Backend variables (Railway sets it automatically but we use JDBC_DATABASE_URL to be safe).**
 
 ### Database Migrations
 
-Flyway automatically runs migrations on startup. Migrations are located in `src/main/resources/db/migration/`:
-
-- V13: Create professional schema
-- V14: Seed initial data
-- V15: Add stock out reasons
-- V16: Rename first_last_name to name
-- V17: Add initial stock movements
+Flyway automatically runs migrations on startup. Migrations are located in `src/main/resources/db/migration/`.
 
 ## Building & Deployment
 
-### Build JAR
-```bash
-mvn clean package -DskipTests -Pprod
-```
+### CI/CD Pipeline
+The project uses **GitHub Actions** (`.github/workflows/deploy-prod.yml`) to build and test on every push to `main`.
+Railway automatically deploys the built Docker image.
 
 ### Docker Build
-```bash
-docker build -t inventory-backend:latest .
-docker run -p 8081:8081 inventory-backend:latest
-```
+The project uses a multi-stage `Dockerfile` optimized for Java 21.
 
 ### Deploy to Railway
 
-1. Connect your GitHub repository to Railway
-2. **CRITICAL**: Configure Environment Variables in Railway Dashboard
-   - Railway Postgres Plugin usually sets `DATABASE_URL` and `PG*` variables automatically.
-   - If they are missing, you MUST set them manually or link the database service.
-   - **Required Variables**:
-     ```
-     PGHOST=your-database-host
-     PGPORT=your-database-port
-     PGDATABASE=your-database-name
-     PGUSER=your-database-user
-     PGPASSWORD=your-database-password
-     JWT_SECRET=your-strong-secret-key
-     CORS_ALLOWED_ORIGINS=https://your-frontend-domain.com
-     SPRING_PROFILES_ACTIVE=railway
-     ```
-   - **Alternative**: If you only have `DATABASE_URL` (format `postgresql://...`), you can set:
-     ```
-     SPRING_DATASOURCE_URL=${DATABASE_URL}
-     ```
-     *Note: This might require fixing JDBC URL format in some drivers.*
-
-3. Railway automatically builds and deploys on push
+1. **Connect** your GitHub repository to Railway.
+2. **Configure Variables** as listed above.
+3. **Deploy**. Railway will build using the Dockerfile.
 
 See [RAILWAY_DEPLOYMENT_GUIDE.md](../RAILWAY_DEPLOYMENT_GUIDE.md) for detailed instructions.
 
