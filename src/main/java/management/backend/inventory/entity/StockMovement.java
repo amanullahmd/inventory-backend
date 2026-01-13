@@ -68,6 +68,10 @@ public class StockMovement {
     private StockOutReasonEnum reasonType;
     
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "reason_id")
+    private StockOutReason stockOutReason;
+    
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "supplier_id")
     private Supplier supplier;
     
@@ -226,6 +230,9 @@ public class StockMovement {
     
     public StockSourceMode getSourceMode() { return sourceMode; }
     public void setSourceMode(StockSourceMode sourceMode) { this.sourceMode = sourceMode; }
+    
+    public StockOutReason getStockOutReason() { return stockOutReason; }
+    public void setStockOutReason(StockOutReason stockOutReason) { this.stockOutReason = stockOutReason; }
     
     @Override
     public boolean equals(Object o) {

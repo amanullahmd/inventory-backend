@@ -31,7 +31,7 @@ public class Category {
     @Column(name = "icon", length = 50)
     private String icon;
     
-    @Column(name = "category_code", length = 100)
+    @Column(name = "category_code", nullable = false, length = 100)
     private String categoryCode;
     
     @Column(name = "is_active", nullable = false)

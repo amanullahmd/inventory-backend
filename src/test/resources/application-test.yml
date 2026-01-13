@@ -1,22 +1,37 @@
 spring:
+  application:
+    name: inventory-backend-test
+
   datasource:
-    url: jdbc:h2:mem:testdb
-    driver-class-name: org.h2.Driver
+    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
     username: sa
-    password:
+    password: 
+    driver-class-name: org.h2.Driver
+
   jpa:
-    database-platform: org.hibernate.dialect.H2Dialect
     hibernate:
-      ddl-auto: create
+      ddl-auto: create-drop
     show-sql: false
     properties:
       hibernate:
-        format_sql: true
-  h2:
-    console:
-      enabled: true
+        dialect: org.hibernate.dialect.H2Dialect
+
   flyway:
     enabled: false
+
+server:
+  port: 0
+
+jwt:
+  secret: test-secret-key-for-testing-purposes-only-32chars
+  access-token-expiration: 3600000
+  refresh-token-expiration: 86400000
+
+app:
+  cors:
+    allowed-origins: http://localhost:3000
+  security:
+    jwt-secret-min-length: 32
 
 logging:
   level:

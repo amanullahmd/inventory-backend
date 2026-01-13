@@ -3,9 +3,10 @@ package management.backend.inventory.config;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 
 import javax.sql.DataSource;
 import java.net.URI;
@@ -21,7 +22,8 @@ import java.net.URISyntaxException;
  * with the correct JDBC URL format that Hikari expects:
  * jdbc:postgresql://host:port/database
  * 
- * Falls back to localhost for local development when RAILWAY_POSTGRESQL_URL is not set.
+ * Falls back to Spring Boot's default DataSource configuration when 
+ * RAILWAY_POSTGRESQL_URL is not set (for local development).
  */
 @Slf4j
 @Configuration
@@ -30,16 +32,22 @@ public class DataSourceConfig {
     /**
      * Creates HikariCP DataSource from Railway PostgreSQL URL
      * 
+     * This bean is only created when RAILWAY_POSTGRESQL_URL environment variable is set.
+     * For local development without this variable, Spring Boot's auto-configuration
+     * will create the DataSource from application.yml properties.
+     * 
      * Parses RAILWAY_POSTGRESQL_URL (postgres://user:pass@host:port/db)
      * into JDBC format (jdbc:postgresql://host:port/db) with separate credentials
      */
     @Bean
-    public DataSource dataSource() {
+    @Primary
+    @ConditionalOnExpression("#{environment.getProperty('RAILWAY_POSTGRESQL_URL') != null}")
+    public DataSource railwayDataSource() {
         String railwayUrl = System.getenv("RAILWAY_POSTGRESQL_URL");
         
-        // If Railway URL is not set, let Spring Boot use default configuration
         if (railwayUrl == null || railwayUrl.isEmpty()) {
-            log.info("RAILWAY_POSTGRESQL_URL not set, using default Spring Boot configuration");
+            // This shouldn't happen due to @ConditionalOnExpression, but just in case
+            log.warn("RAILWAY_POSTGRESQL_URL is empty, this bean should not have been created");
             return null;
         }
 

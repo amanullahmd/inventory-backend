@@ -5,6 +5,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -23,7 +24,17 @@ public class AppProperties {
 
     @Data
     public static class Cors {
-        private List<String> allowedOrigins = new ArrayList<>();
+        private List<String> allowedOrigins = new ArrayList<>(Arrays.asList("http://localhost:3000", "http://localhost:3001"));
+        
+        public void setAllowedOrigins(List<String> allowedOrigins) {
+            this.allowedOrigins = allowedOrigins;
+        }
+        
+        public void setAllowedOrigins(String allowedOrigins) {
+            if (allowedOrigins != null && !allowedOrigins.isEmpty()) {
+                this.allowedOrigins = Arrays.asList(allowedOrigins.split(","));
+            }
+        }
     }
 
     @Data

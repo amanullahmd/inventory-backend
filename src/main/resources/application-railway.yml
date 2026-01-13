@@ -9,12 +9,10 @@ spring:
       enabled: false
 
   datasource:
-    url: ${RAILWAY_POSTGRESQL_URL:jdbc:postgresql://localhost:5432/inventory}
-    username: ${PGUSER:postgres}
-    password: ${PGPASSWORD:postgres}
+    url: ${DATABASE_URL:jdbc:postgresql://interchange.proxy.rlwy.net:57838/railway}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD:RIOQCXxEaiSuipevEQhBbfDJYokCeqQp}
     driver-class-name: org.postgresql.Driver
-    # Railway provides RAILWAY_POSTGRESQL_URL which DataSourceConfig parses
-    # Falls back to localhost for local development
     hikari:
       maximum-pool-size: 10
       minimum-idle: 2
@@ -42,7 +40,7 @@ spring:
   flyway:
     enabled: true
     locations: classpath:db/migration
-    baseline-on-migrate: false
+    baseline-on-migrate: true
     validate-on-migrate: false
     out-of-order: false
     repair-on-migrate: false
@@ -60,8 +58,6 @@ logging:
     management.backend.inventory: INFO
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
-  file:
-    name: logs/inventory-backend-json.log
 
 server:
   port: ${RAILWAY_TCP_APPLICATION_PORT:8080}
@@ -82,12 +78,15 @@ server:
 springdoc:
   api-docs:
     path: /v3/api-docs
+    enabled: true
   swagger-ui:
     path: /swagger-ui.html
-    enabled: false
+    enabled: true
+    operations-sorter: method
+    tags-sorter: alpha
 
 jwt:
-  secret: ${JWT_SECRET}
+  secret: ${JWT_SECRET:your-secret-key-change-this-in-production-at-least-32-characters}
   access-token-expiration: 315360000000
   refresh-token-expiration: 315360000000
 

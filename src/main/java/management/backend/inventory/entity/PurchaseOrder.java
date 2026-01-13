@@ -64,7 +64,7 @@ public class PurchaseOrder {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
     
-    @Column(name = "purchase_order_code", length = 50, unique = true, nullable = false)
+    @Column(name = "purchase_order_code", length = 50, unique = true)
     private String purchaseOrderCode;
     
     @PrePersist
