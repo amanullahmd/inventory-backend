@@ -9,12 +9,11 @@ spring:
       enabled: false
 
   datasource:
-    url: ${RAILWAY_POSTGRESQL_URL:jdbc:postgresql://localhost:5432/inventory}
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/inventory}
     username: ${PGUSER:postgres}
     password: ${PGPASSWORD:postgres}
     driver-class-name: org.postgresql.Driver
-    # Railway provides RAILWAY_POSTGRESQL_URL which DataSourceConfig parses
-    # Falls back to localhost for local development
+    # Railway provides DATABASE_URL - falls back to localhost for local development
     hikari:
       maximum-pool-size: 10
       minimum-idle: 2
@@ -50,7 +49,7 @@ spring:
     connect-retries-interval: 1
 
 server:
-  port: ${RAILWAY_TCP_APPLICATION_PORT:${PORT:8081}}
+  port: ${PORT:8081}
   servlet:
     context-path: /api
   compression:
