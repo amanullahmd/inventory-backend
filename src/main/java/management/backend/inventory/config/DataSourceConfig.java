@@ -15,52 +15,58 @@ import java.net.URISyntaxException;
 /**
  * DataSource Configuration for Railway PostgreSQL
  * 
- * Railway provides RAILWAY_POSTGRESQL_URL as a complete PostgreSQL URI:
- * postgres://username:password@host:port/database
+ * Railway provides DATABASE_URL as a complete PostgreSQL URI:
+ * postgresql://username:password@host:port/database
  * 
  * This configuration parses that URI and creates a HikariCP DataSource
  * with the correct JDBC URL format that Hikari expects:
  * jdbc:postgresql://host:port/database
  * 
  * Falls back to Spring Boot's default DataSource configuration when 
- * RAILWAY_POSTGRESQL_URL is not set (for local development).
+ * DATABASE_URL is not set (for local development).
  */
 @Slf4j
 @Configuration
 public class DataSourceConfig {
 
     /**
-     * Creates HikariCP DataSource from Railway PostgreSQL URL
+     * Creates HikariCP DataSource from Railway DATABASE_URL
      * 
-     * This bean is only created when RAILWAY_POSTGRESQL_URL environment variable is set.
+     * This bean is only created when DATABASE_URL environment variable is set.
      * For local development without this variable, Spring Boot's auto-configuration
      * will create the DataSource from application.yml properties.
      * 
-     * Parses RAILWAY_POSTGRESQL_URL (postgres://user:pass@host:port/db)
+     * Parses DATABASE_URL (postgresql://user:pass@host:port/db)
      * into JDBC format (jdbc:postgresql://host:port/db) with separate credentials
      */
     @Bean
     @Primary
-    @ConditionalOnExpression("#{environment.getProperty('RAILWAY_POSTGRESQL_URL') != null}")
+    @ConditionalOnExpression("#{environment.getProperty('DATABASE_URL') != null}")
     public DataSource railwayDataSource() {
-        String railwayUrl = System.getenv("RAILWAY_POSTGRESQL_URL");
+        String databaseUrl = System.getenv("DATABASE_URL");
         
-        if (railwayUrl == null || railwayUrl.isEmpty()) {
+        if (databaseUrl == null || databaseUrl.isEmpty()) {
             // This shouldn't happen due to @ConditionalOnExpression, but just in case
-            log.warn("RAILWAY_POSTGRESQL_URL is empty, this bean should not have been created");
+            log.warn("DATABASE_URL is empty, this bean should not have been created");
             return null;
         }
 
         try {
-            log.info("Parsing Railway PostgreSQL URL");
+            log.info("Parsing DATABASE_URL: {}", databaseUrl.replaceAll(":[^:@]+@", ":****@"));
+            
+            // Handle both postgres:// and postgresql:// schemes
+            String normalizedUrl = databaseUrl;
+            if (normalizedUrl.startsWith("postgres://")) {
+                normalizedUrl = "postgresql://" + normalizedUrl.substring("postgres://".length());
+            }
             
             // Parse the PostgreSQL URI
-            URI dbUri = new URI(railwayUrl);
+            URI dbUri = new URI(normalizedUrl);
             
             // Extract credentials
             String userInfo = dbUri.getUserInfo();
             if (userInfo == null) {
-                throw new RuntimeException("No user info in RAILWAY_POSTGRESQL_URL");
+                throw new RuntimeException("No user info in DATABASE_URL");
             }
             
             String[] credentials = userInfo.split(":");
@@ -78,8 +84,8 @@ public class DataSourceConfig {
             // Build JDBC URL
             String jdbcUrl = String.format("jdbc:postgresql://%s:%d/%s", host, port, database);
             
-            log.info("Creating HikariCP DataSource for Railway PostgreSQL");
-            log.debug("Host: {}, Port: {}, Database: {}", host, port, database);
+            log.info("Creating HikariCP DataSource for DATABASE_URL");
+            log.info("Host: {}, Port: {}, Database: {}", host, port, database);
             
             // Create HikariCP configuration
             HikariConfig config = new HikariConfig();
@@ -98,14 +104,14 @@ public class DataSourceConfig {
             config.setConnectionTestQuery("SELECT 1");
             config.setLeakDetectionThreshold(60000);
             
-            log.info("HikariCP DataSource created successfully for Railway");
+            log.info("HikariCP DataSource created successfully");
             return new HikariDataSource(config);
             
         } catch (URISyntaxException e) {
-            log.error("Failed to parse RAILWAY_POSTGRESQL_URL: {}", railwayUrl, e);
-            throw new RuntimeException("Invalid RAILWAY_POSTGRESQL_URL format", e);
+            log.error("Failed to parse DATABASE_URL: {}", databaseUrl.replaceAll(":[^:@]+@", ":****@"), e);
+            throw new RuntimeException("Invalid DATABASE_URL format", e);
         } catch (Exception e) {
-            log.error("Failed to create DataSource from Railway PostgreSQL URL", e);
+            log.error("Failed to create DataSource from DATABASE_URL", e);
             throw new RuntimeException("Failed to create DataSource", e);
         }
     }
