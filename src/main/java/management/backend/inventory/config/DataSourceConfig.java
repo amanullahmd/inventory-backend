@@ -41,14 +41,27 @@ public class DataSourceConfig {
                 String database = uri.getPath().substring(1); // Remove leading /
                 String userInfo = uri.getUserInfo();
                 
+                String parsedPassword = null;
                 if (userInfo != null && userInfo.contains(":")) {
                     String[] parts = userInfo.split(":", 2);
                     username = parts[0];
-                    password = parts[1];
+                    parsedPassword = parts[1];
                 } else {
                     username = userInfo != null ? userInfo : "postgres";
-                    password = System.getenv("PGPASSWORD");
-                    if (password == null) password = "";
+                }
+                
+                // IMPORTANT: Prefer PGPASSWORD env var over password from DATABASE_URL
+                // Railway sets PGPASSWORD as the authoritative password source
+                String pgPassword = System.getenv("PGPASSWORD");
+                if (pgPassword != null && !pgPassword.isEmpty()) {
+                    password = pgPassword;
+                    log.info("Using PGPASSWORD environment variable");
+                } else if (parsedPassword != null && !parsedPassword.isEmpty()) {
+                    password = parsedPassword;
+                    log.info("Using password from DATABASE_URL");
+                } else {
+                    password = "";
+                    log.warn("No password found in PGPASSWORD or DATABASE_URL");
                 }
                 
                 // Handle case where host might be empty in the URL
@@ -65,6 +78,7 @@ public class DataSourceConfig {
                 
                 log.info("Parsed DATABASE_URL - Host: {}, Port: {}, Database: {}, User: {}", 
                         host, port, database, username);
+                log.info("Password source: {}", (pgPassword != null && !pgPassword.isEmpty()) ? "PGPASSWORD" : "DATABASE_URL");
                         
             } catch (Exception e) {
                 log.error("Failed to parse DATABASE_URL: {}", e.getMessage());
