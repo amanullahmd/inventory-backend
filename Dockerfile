@@ -31,5 +31,5 @@ COPY --from=builder /app/target/*.jar app.jar
 # Expose port
 EXPOSE 8080
 
-# Run the Spring Boot app
-CMD ["sh", "-c", "java -jar app.jar"]
+# Run the Spring Boot app with profile from environment variable
+CMD ["sh", "-c", "java -Dspring.profiles.active=${SPRING_PROFILES_ACTIVE:-default} -jar app.jar"]
