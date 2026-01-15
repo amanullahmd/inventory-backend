@@ -71,8 +71,6 @@ public class DataSourceConfig {
         }
         
         // Pattern: postgresql://user:pass@host:port/database
-        // Also handles: postgresql://user:pass@host/database (no port)
-        // Also handles: postgresql://user:pass@:port/database (no host - Railway bug)
         Pattern pattern = Pattern.compile("postgresql://([^:]+):([^@]+)@([^:/]*):?(\\d*)/(.+)");
         Matcher matcher = pattern.matcher(url);
         
@@ -90,30 +88,18 @@ public class DataSourceConfig {
         log.info("Parsed - User: {}, Password length: {}, Host: '{}', Port: '{}', Database: {}", 
                 username, password != null ? password.length() : 0, host, portStr, database);
         
-        // Handle missing host
+        // If host is missing, we can't use this URL - return null to try next option
         if (host == null || host.isEmpty()) {
-            String pgHost = System.getenv("PGHOST");
-            if (pgHost != null && !pgHost.isEmpty()) {
-                host = pgHost;
-                log.info("Using PGHOST for missing host: {}", host);
-            } else {
-                host = "postgres.railway.internal";
-                log.info("Using Railway internal networking for missing host: {}", host);
-            }
+            log.warn("Host is empty in URL, cannot use this URL");
+            return null;
         }
         
-        // Handle port - use PGPORT if not in URL
+        // Handle port
         int port;
         if (portStr != null && !portStr.isEmpty()) {
             port = Integer.parseInt(portStr);
         } else {
-            String pgPort = System.getenv("PGPORT");
-            if (pgPort != null && !pgPort.isEmpty()) {
-                port = Integer.parseInt(pgPort);
-                log.info("Using PGPORT for missing port: {}", port);
-            } else {
-                port = 5432;
-            }
+            port = 5432;
         }
         
         String jdbcUrl = String.format("jdbc:postgresql://%s:%d/%s", host, port, database);
@@ -129,6 +115,20 @@ public class DataSourceConfig {
         String pgDatabase = System.getenv("PGDATABASE");
         String username = System.getenv("PGUSER");
         String password = System.getenv("PGPASSWORD");
+        
+        // For Railway public proxy, use different host/port
+        String pgPublicHost = System.getenv("PGHOST_PUBLIC");
+        String pgPublicPort = System.getenv("PGPORT_PUBLIC");
+        
+        // Prefer public connection if available
+        if (pgPublicHost != null && !pgPublicHost.isEmpty()) {
+            pgHost = pgPublicHost;
+            log.info("Using PGHOST_PUBLIC: {}", pgHost);
+        }
+        if (pgPublicPort != null && !pgPublicPort.isEmpty()) {
+            pgPort = pgPublicPort;
+            log.info("Using PGPORT_PUBLIC: {}", pgPort);
+        }
         
         if (pgHost == null || pgHost.isEmpty()) pgHost = "postgres.railway.internal";
         if (pgPort == null || pgPort.isEmpty()) pgPort = "5432";
