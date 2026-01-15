@@ -50,18 +50,23 @@ public class DataSourceConfig {
                     username = userInfo != null ? userInfo : "postgres";
                 }
                 
-                // IMPORTANT: Prefer PGPASSWORD env var over password from DATABASE_URL
-                // Railway sets PGPASSWORD as the authoritative password source
+                // IMPORTANT: Prefer password from DATABASE_URL since it's the source of truth
+                // PGPASSWORD might be a reference that doesn't resolve correctly
                 String pgPassword = System.getenv("PGPASSWORD");
-                if (pgPassword != null && !pgPassword.isEmpty()) {
-                    password = pgPassword;
-                    log.info("Using PGPASSWORD environment variable");
-                } else if (parsedPassword != null && !parsedPassword.isEmpty()) {
+                
+                log.info("PGPASSWORD length: {}", pgPassword != null ? pgPassword.length() : "null");
+                log.info("Parsed password length: {}", parsedPassword != null ? parsedPassword.length() : "null");
+                
+                // Use password from DATABASE_URL as primary source
+                if (parsedPassword != null && !parsedPassword.isEmpty()) {
                     password = parsedPassword;
-                    log.info("Using password from DATABASE_URL");
+                    log.info("Using password from DATABASE_URL (length={})", password.length());
+                } else if (pgPassword != null && !pgPassword.isEmpty()) {
+                    password = pgPassword;
+                    log.info("Using PGPASSWORD environment variable (length={})", password.length());
                 } else {
                     password = "";
-                    log.warn("No password found in PGPASSWORD or DATABASE_URL");
+                    log.warn("No password found in DATABASE_URL or PGPASSWORD");
                 }
                 
                 // Handle case where host might be empty in the URL
@@ -78,7 +83,7 @@ public class DataSourceConfig {
                 
                 log.info("Parsed DATABASE_URL - Host: {}, Port: {}, Database: {}, User: {}", 
                         host, port, database, username);
-                log.info("Password source: {}", (pgPassword != null && !pgPassword.isEmpty()) ? "PGPASSWORD" : "DATABASE_URL");
+                log.info("Password source: {}", (parsedPassword != null && !parsedPassword.isEmpty()) ? "DATABASE_URL" : "PGPASSWORD");
                         
             } catch (Exception e) {
                 log.error("Failed to parse DATABASE_URL: {}", e.getMessage());
